@@ -2,7 +2,7 @@
 
 
 
-<a href="https://idx.google.com/new?template=https%3A%2F%2Fgithub.com%2Fpatterns%2Fcertification%2Face%2Feep567">
+<a href="https://idx.google.com/new?template=https%3A%2F%2Fgithub.com%2Fpatterns%2Fcertification">
   <picture>
     <source
       media="(prefers-color-scheme: dark)"
