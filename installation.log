@@ -1,0 +1,64 @@
+# picokey (pico sdk)
+sudo apt install cmake
+git clone https://github.com/polhenarejos/pico-fido.git
+ cd pico-fido
+ git submodule update --init --recursive
+		Submodule 'pico-keys-sdk' (https://github.com/polhenarejos/pico-keys-sdk) registered for path 'pico-keys-sdk'
+		Cloning into '/home/husky/devel/pico-fido/pico-keys-sdk'...
+		Submodule path 'pico-keys-sdk': checked out '6a18e3aa833b4b794cd13d01957a32cf494073fb'
+		Submodule 'mbedtls' (https://github.com/ARMmbed/mbedtls) registered for path 'pico-keys-sdk/mbedtls'
+		Submodule 'tinycbor' (https://github.com/intel/tinycbor.git) registered for path 'pico-keys-sdk/tinycbor'
+		Cloning into '/home/husky/devel/pico-fido/pico-keys-sdk/mbedtls'...
+		Cloning into '/home/husky/devel/pico-fido/pico-keys-sdk/tinycbor'...
+		Submodule path 'pico-keys-sdk/mbedtls': checked out '107ea89daaefb9867ea9121002fbbdf926780e98'
+		Submodule 'framework' (https://github.com/Mbed-TLS/mbedtls-framework) registered for path 'pico-keys-sdk/mbedtls/framework'
+		Cloning into '/home/husky/devel/pico-fido/pico-keys-sdk/mbedtls/framework'...
+		Submodule path 'pico-keys-sdk/mbedtls/framework': checked out '94599c0e3b5036e086446a51a3f79640f70f22f6'
+		Submodule path 'pico-keys-sdk/tinycbor': checked out 'e27261ed5e2ed059d160f16ae776951a08a861fc'
+
+mkdir build && cd build
+(export TARGET_BOARD=adafruit_kb2040)
+PICO_SDK_PATH=~/.pico-sdk/sdk/2.1.0 cmake .. -DPICO_BOARD=$TARGET_BOARD 
+make
+
+/////////////////////////////
+# tock setup
+Pico board dev using raspi4 (raspi os)
+ sudo apt install automake autoconf build-essential texinfo libtool libftdi-dev libusb-1.0-0-dev
+ curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh
+ sudo apt install gcc-arm-none-eabi 
+(git clone raspberrypi/openocd.git --branch rp2040)
+cd openocd && make clean
+./bootstrap
+./configure --enable-ftdi --enable-sysfsgpio --enable-bcm2835gpio
+make -j4
+sudo make install
+(git clone tock/tock.git)
+(git clone tock/libtock-c.git)
+python3 -m venv vlocal
+source vlocal/bin/activate
+pip3 install tockloader
+(udev rules are already in rpi4 for pico board?)
+sudo apt install libudev-dev
+cargo install elf2uf2-rs
+sudo apt install minicom
+
+(minicom -b 115200 -o -D /dev/serial0)
+
+cd tock/boards/raspberry_pi_pico
+cargo build
+make flash
+
+$ tockloader erase-apps
+
+
+cd libtock-c/examples/c_hello
+# it will build all target arch so this was required
+# sudo apt install gcc-arm-none-eabi gcc-riscv64-unknown-elf
+make
+cd tock/boards/raspberry_pi_pico
+$APP=../../../libtock-c/examples/c_hello/build/cortex-m0/cortex-m0.tbf make program
+
+
+
+

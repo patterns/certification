@@ -1,0 +1,74 @@
+# EEP595 Project
+Eliminate password custodians with USB keys
+12 Dec 2024
+Tags: FIDO2, authenticator, passkey
+Summary: Project for EEP595 to attempt DIY USB key 
+
+Hsinih Tu
+Volunteer
+hsinih@u.washington.edu
+
+## Table of Contents
+
+1. Problem
+2. Previous work
+3. Approach
+4. Demo
+
+## Problem: Passwords
+
+**Non-profit are constrained:**
+
+- Budget
+- Resources
+
+**Build (LMS) Authentication**
+
+- Registration / Login / Session
+- Passwords, naturally?
+- OWASP (and industry reco) guidelines
+- "stop using passwords"
+
+**Options**
+
+- WebAuthn + Passkeys
+- Yubikey ($25, $50)
+- Solokey ($34, $46)
+
+
+## Previous work
+
+**OAuth2**
+(Cloudflare Access, GitHub, twitch integration)
+
+Pros:
+1. Wide adoption
+2. Zero user training (transparent)
+3. Low-cost?
+
+Cons:
+1. Multistep protocol (easy to get wrong)
+2. Requires network to contact ID provider
+3. Integrate each ID provider
+4. or Resort to integration svc provider (Okta /Auth0)
+
+
+## Approach
+
+[OpenSK](https://github.com/google/openSK.git)
+ open source project using Tock embedded OS
+
+1. dependencies (python3/pip3, libssl, tockloader)
+   1.a. nrfutil  (after 2022)
+2. rustup
+3. setup.sh
+4. deploy.py
+
+
+## Demo
+
+- nrf52840 dongle + OpenSK
+- adafruit kb2040 + pico-fido
+- rpi pico + SDK (blink)
+
+

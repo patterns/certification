@@ -1,0 +1,3 @@
+hw-3 notes
+? what are the test cases that will prove that my implementation is correct? because it is unlikely that the instructions include the test cases that will be used to grade the assignment
+wtf, python bytes:str with json un/marshaling and base64 de/encode is convoluted OR I'm missing something obvious.
