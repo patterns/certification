@@ -1,7 +1,7 @@
 { pkgs, ... }: {
-  packages = [
-    pkgs.uv
-  ];
+#  packages = [
+#    pkgs.uv
+#  ];
   bootstrap = ''    
     mkdir "$out"
     mkdir -p "$out/.idx/"
