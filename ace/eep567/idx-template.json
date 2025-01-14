@@ -1,0 +1,11 @@
+{
+    "name": "Jupyter",
+    "description": "IDX template for Jupyter notebook classwork",
+    "categories": [
+      "Jupyter",
+      "ML"
+    ],
+    "icon": "",
+    "website": "",
+    "publisher": ""
+  }
