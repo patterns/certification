@@ -16,7 +16,7 @@
     workspace = {
       # Runs when a workspace is first created with this `dev.nix` file
       onCreate = {
-        installDependencies = "cargo install --git https://github.com/astral-sh/uv uv"
+        installDependencies = "cargo install --git https://github.com/astral-sh/uv uv";
         ####install =
         ####  "uv init hello-world";
         setup-project = ''
