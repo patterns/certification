@@ -1,7 +1,11 @@
 { pkgs, environment ? "py-notebook",  ... }: {
-    packages = [ pkgs.curl ];
+    packages = [
+      pkgs.python311
+      pkgs.python311Packages.pip
+    ];
   bootstrap = ''
-    curl -LsSf https://astral.sh/uv/install.sh | sh
+    pip install uv
+
     cp -rf ${./.}/${environment} "$WS_NAME"
     chmod -R +w "$WS_NAME"
 
