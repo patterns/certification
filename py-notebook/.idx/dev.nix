@@ -24,7 +24,7 @@
 
         '';
         # Open editors for the following files by default, if they exist:
-        default.openFiles = [ "main.ipynb" ];
+        default.openFiles = [ "hello.py" "README.md" ];
       };
       # To run something each time the workspace is (re)started, use the `onStart` hook
     };
