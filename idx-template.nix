@@ -1,10 +1,7 @@
 { pkgs, environment ? "py-notebook",  ... }: {
-    packages = [
-      pkgs.python311
-      pkgs.python311Packages.pip
-    ];
+    packages = [];
+
   bootstrap = ''
-    pip install uv
 
     cp -rf ${./.}/${environment} "$WS_NAME"
     chmod -R +w "$WS_NAME"
