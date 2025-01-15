@@ -7,7 +7,6 @@
   packages = [
     pkgs.python311
     pkgs.python311Packages.pip
-    pkgs.mescc-tools-extra
     pkgs.uv
   ];
   # Sets environment variables in the workspace
@@ -24,9 +23,9 @@
         create-venv = ''
 
           uv add --dev ipykernel
-          uv add pandas numpy scipy scikit-learn matplotlib
 
         '';
+####          uv add pandas numpy scipy scikit-learn matplotlib
         # Open editors for the following files by default, if they exist:
         default.openFiles = [ "hello.py" "README.md" ];
       };
