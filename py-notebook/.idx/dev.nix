@@ -2,11 +2,13 @@
 # see: https://developers.google.com/idx/guides/customize-idx-env
 { pkgs, ... }: {
   # Which nixpkgs channel to use.
-  channel = "stable-24.05"; # or "unstable"
+  channel = "stable-24.11"; # or "unstable"
   # Use https://search.nixos.org/packages to find packages
   packages = [
     pkgs.python311
     pkgs.python311Packages.pip
+    pkgs.mescc-tools-extra
+    pkgs.uv
   ];
   # Sets environment variables in the workspace
   env = {};
@@ -20,11 +22,9 @@
       # Runs when a workspace is first created with this `dev.nix` file
       onCreate = {
         create-venv = ''
-          python -m venv .venv
-          source .venv/bin/activate
-          pip install uv
+
           uv add --dev ipykernel
-          uv add pandas numpy scipy sklearn matplotlib
+          uv add pandas numpy scipy scikit-learn matplotlib
 
         '';
         # Open editors for the following files by default, if they exist:
