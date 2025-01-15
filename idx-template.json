@@ -1,11 +1,22 @@
 {
-    "name": "Jupyter",
-    "description": "IDX template for Jupyter notebook classwork",
-    "categories": [
-      "Jupyter",
-      "ML"
-    ],
-    "icon": "",
-    "website": "",
-    "publisher": ""
-  }
+  "name": "IDX Placeholder Template",
+  "description": "Start a Jupyter notebook",
+  "categories": ["AI & ML"],
+  "icon": "https://www.gstatic.com/monospace/231128/logo_gemini_512.png",
+  "publisher": "",
+  "params": [
+    {
+      "id": "environment",
+      "name": "Environment",
+      "type": "enum",
+      "default": "py-notebook",
+      "options": {
+
+
+
+        "py-notebook": "Python Notebook",
+        "go-web": "Go Web App"
+      }
+    }
+  ]
+}

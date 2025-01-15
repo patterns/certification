@@ -18,6 +18,6 @@
 </a>
 
 ### Credits
-FastAPI template
- by [Srivats Venkataraman](https://github.com/project-idx/community-templates/tree/main/fastapi)
+Gemini Notebook template
+ by [Project IDX](https://github.com/project-idx/templates/tree/main/gemini)
 
