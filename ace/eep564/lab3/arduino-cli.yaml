@@ -1,0 +1,14 @@
+board_manager:
+    additional_urls: []
+
+sketch:
+    always_export_binaries: true
+
+logging:
+    level: debug
+
+library:
+    enable_unsafe_install: true
+
+
+
