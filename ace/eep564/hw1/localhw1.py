@@ -87,112 +87,172 @@ print("\nClass distribution:\n", class_counts)
 # - Subtract 1 from class labels to convert them to 0-based indexing
 # - Assign class labels to variable y
 
-# <-- Enter your code here <--#
+X = df.drop(["Class"], axis=1).values
+y = df["Class"].sub(1).values
 
 # Step 2: Perform a train-test split (70% train, 30% test) using random_state=42
 
-# <-- Enter your code here <--#
+X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.3, random_state=42)
 
 # Step 3: Use StandardScaler to normalize the features
 # - Fit on X_train and transform both X_train and X_test
 
-# <-- Enter your code here <--#
+X_train_norm = StandardScaler().fit_transform(X_train)
+X_test_norm = StandardScaler().fit_transform(X_test)
 
 # Step 4: Use one-hot encoding for y_train and y_test
 # - Use keras.utils.to_categorical
 
-# <-- Enter your code here <--#
+y_train_ohenc = to_categorical(y_train)
+y_test_ohenc = to_categorical(y_test)
 
 # Step 5: Define a Sequential model with the following architecture:
 # - Dense(64, relu)
 # - Dense(32, relu)
 # - Dense(3, softmax)  # 3-class classification
 
-# <-- Enter your code here <--#
+model = Sequential(
+    [
+        Dense(64, activation="relu"),
+        Dense(32, activation="relu"),
+        Dense(3, activation="softmax"),
+    ]
+)
 
 # Step 6: Compile using Adam optimizer, categorical_crossentropy loss, and accuracy metric
 # - Train for 20 epochs with batch_size=8 and validation_split=0.2
 
-# <-- Enter your code here <--#
+model.compile(optimizer='adam', loss='categorical_crossentropy', metrics=['accuracy'])
+history = model.fit(X_train_norm, y_train_ohenc, epochs=20, batch_size=8, validation_split=0.2)
 
 # Step 7: Evaluate the model on test data and print:
 # - Accuracy
 # - Classification report
 # - Confusion matrix
 
-# <-- Enter your code here <--#
+baseline_accuracy = model.evaluate(X_test_norm, y_test_ohenc, verbose=0)[1]
+print(f"Baseline Model Accuracy: {baseline_accuracy:.4f}")
+predictions = model.predict(X_test_norm)
+# Convert predictions to class labels (0, 1, or 2)
+predicted_labels = np.argmax(predictions, axis=1) 
+# Convert y_test_ohenc back to class labels if necessary
+true_labels = np.argmax(y_test_ohenc, axis=1)
+print("Classification report:")
+print(classification_report(true_labels, predicted_labels))
+print("Confusion matrix:")
+print(confusion_matrix(true_labels, predicted_labels))
 
 # Step 8: Convert the trained model to TFLite format and save it as "model_base.tflite"
 # - Print the file size in kilobytes
 
-# <-- Enter your code here <--#
+converter = tf.lite.TFLiteConverter.from_keras_model(model)
+tflite_model = converter.convert()
+with open("model_base.tflite", "wb") as f:
+    f.write(tflite_model)
+
+print(f"model_base.tflite: {os.path.getsize('model_base.tflite') / 1024:.2f} KB")
 
 """## Problem 1 - Part (b)
 
 ### Quantization (int8, float16, dynamic range)
 
 """
+def representative_data_gen():
+    for input_value in X_train_norm[:100]:
+        yield [input_value.astype("float32")]
 
-# def quantize_and_evaluate(model, X_test, y_test_cat, quant_type, filename):
-    # # Create the TFLite converter from the trained Keras model
-    # converter = tf.lite.TFLiteConverter.from_keras_model(model)
+def quantize_and_evaluate(model, X_test, y_test_cat, quant_type, filename):
+    # Create the TFLite converter from the trained Keras model
+    converter = tf.lite.TFLiteConverter.from_keras_model(model)
 
-    # # Set supported ops
-    # converter.target_spec.supported_ops = [
-        # tf.lite.OpsSet.TFLITE_BUILTINS,
-        # tf.lite.OpsSet.SELECT_TF_OPS
-    # ]
-    # converter._experimental_lower_tensor_list_ops = False
+    # Set supported ops
+    converter.target_spec.supported_ops = [
+        tf.lite.OpsSet.TFLITE_BUILTINS,
+        tf.lite.OpsSet.SELECT_TF_OPS
+    ]
+    converter._experimental_lower_tensor_list_ops = False
 
-    # # Step 1: Apply quantization settings
-    # if quant_type == 'int8':
-        # # (a) Enable default optimizations
-        # # (b) Define a representative dataset generator (e.g., first 100 samples from X_train_scaled)
-        # # (c) Set inference_input_type and inference_output_type to tf.int8
+    # Step 1: Apply quantization settings
+    if quant_type == 'int8':
+        # (a) Enable default optimizations
+        # (b) Define a representative dataset generator (e.g., first 100 samples from X_train_scaled)
+        # (c) Set inference_input_type and inference_output_type to tf.int8
 
-        # # <-- Enter your code here <--#
-        # pass
+        converter.optimizations = [tf.lite.Optimize.DEFAULT]
+        converter.representative_dataset = representative_data_gen
+        converter.target_spec.supported_types = [tf.int8]
+        converter.inference_input_type = tf.int8
+        converter.inference_output_type = tf.int8
 
-    # elif quant_type == 'float16':
-        # # (a) Enable default optimizations
-        # # (b) Set supported_types to [tf.float16]
 
-        # # <-- Enter your code here <--#
-        # pass
+    elif quant_type == 'float16':
+        # (a) Enable default optimizations
+        # (b) Set supported_types to [tf.float16]
 
-    # elif quant_type == 'dynamic':
-        # # (a) Enable default optimizations
+        # <-- Enter your code here <--#
+        pass
 
-        # # <-- Enter your code here <--#
-        # pass
+    elif quant_type == 'dynamic':
+        # (a) Enable default optimizations
 
-    # # Step 2: Convert the model and save it to the provided filename
+        # <-- Enter your code here <--#
+        pass
 
-    # # <-- Enter your code here <--#
+    # Step 2: Convert the model and save it to the provided filename
 
-    # # Step 3: Run Inference
-    # # Complete the following:
-    # # - Use tf.lite.Interpreter to load the TFLite model
-    # # - Allocate tensors
-    # # - Get input/output tensor details
-    # # - If input is quantized (dtype=int8), quantize test input accordingly
-    # # - If output is quantized (dtype=int8), dequantize predictions
-    # # - Collect predictions into y_pred (use np.argmax to get class index)
-    # # - Compare with y_true = np.argmax(y_test_cat, axis=1)
+    tflite_model_out = converter.convert()
+    with open(filename, "wb") as f:
+        f.write(tflite_model_out)
 
-    # # <-- Enter your code here: implement Step 5 - TFLite inference <--#
+    # Step 3: Run Inference
+    # Complete the following:
+    # - Use tf.lite.Interpreter to load the TFLite model
+    # - Allocate tensors
+    # - Get input/output tensor details
+    # - If input is quantized (dtype=int8), quantize test input accordingly
+    # - If output is quantized (dtype=int8), dequantize predictions
+    # - Collect predictions into y_pred (use np.argmax to get class index)
+    # - Compare with y_true = np.argmax(y_test_cat, axis=1)
 
-    # # Step 4: Report results
-    # print(f"\n📦 {quant_type.upper()} TFLite Model Size: {os.path.getsize(filename) / 1024:.2f} KB")
+    interpreter = tf.lite.Interpreter(model_path=filename)
+    interpreter.allocate_tensors()
 
-    # # <-- Enter your code here: print classification_report and confusion_matrix <--#
+    input_details = interpreter.get_input_details()
+    output_details = interpreter.get_output_details()
+    input_dtype = input_details[0]['dtype']
+    input_scale, input_zero_point = input_details[0]['quantization']
 
-# # Step 5: Use the function above to create and evaluate three quantized models:
-# # - 'int8' → save as 'model_int8.tflite'
-# # - 'float16' → save as 'model_float16.tflite'
-# # - 'dynamic' → save as 'model_dynamic.tflite'
 
-# # <-- Enter your code here <--#
+    coll_preds = []
+    for i in range(len(X_test)):
+        input_data = X_test[i:i+1].astype("float32")
+
+        # Quantize if necessary
+        if input_dtype == np.int8:
+            input_data = input_data / input_scale + input_zero_point
+            input_data = np.round(input_data).astype(np.int8)
+
+        interpreter.set_tensor(input_details[0]['index'], input_data)
+        interpreter.invoke()
+        output_data = interpreter.get_tensor(output_details[0]['index'])
+        coll_preds.append(output_data[0]) # Get the first element of the prediction output
+
+    # Step 4: Report results
+    print(f"\n📦 {quant_type.upper()} TFLite Model Size: {os.path.getsize(filename) / 1024:.2f} KB")
+    y_pred = np.argmax(coll_preds, axis=1) 
+    y_true = np.argmax(y_test_cat, axis=1)
+    print(f"{quant_type.upper()} Classification report:")
+    print(classification_report(y_true, y_pred))
+    print(f"{quant_type.upper()} Confusion matrix:")
+    print(confusion_matrix(y_true, y_pred))
+
+# Step 5: Use the function above to create and evaluate three quantized models:
+# - 'int8' → save as 'model_int8.tflite'
+# - 'float16' → save as 'model_float16.tflite'
+# - 'dynamic' → save as 'model_dynamic.tflite'
+
+quantize_and_evaluate(model, X_test_norm, y_test_ohenc, 'int8', 'model_int8.tflite')
+
 
 # """## Problem 1 - Part (c)
 
