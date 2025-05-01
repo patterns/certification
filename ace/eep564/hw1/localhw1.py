@@ -93,6 +93,8 @@ y = df["Class"].sub(1).values
 # Step 2: Perform a train-test split (70% train, 30% test) using random_state=42
 
 X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.3, random_state=42)
+# print(X_train.shape)
+# print(X_test.shape)
 
 # Step 3: Use StandardScaler to normalize the features
 # - Fit on X_train and transform both X_train and X_test
@@ -177,26 +179,22 @@ def quantize_and_evaluate(model, X_test, y_test_cat, quant_type, filename):
         # (a) Enable default optimizations
         # (b) Define a representative dataset generator (e.g., first 100 samples from X_train_scaled)
         # (c) Set inference_input_type and inference_output_type to tf.int8
-
         converter.optimizations = [tf.lite.Optimize.DEFAULT]
         converter.representative_dataset = representative_data_gen
         converter.target_spec.supported_types = [tf.int8]
         converter.inference_input_type = tf.int8
         converter.inference_output_type = tf.int8
 
-
     elif quant_type == 'float16':
         # (a) Enable default optimizations
         # (b) Set supported_types to [tf.float16]
-
-        # <-- Enter your code here <--#
-        pass
+        converter.optimizations = [tf.lite.Optimize.DEFAULT]
+        converter.target_spec.supported_types = [tf.float16]
 
     elif quant_type == 'dynamic':
         # (a) Enable default optimizations
+        converter.optimizations = [tf.lite.Optimize.DEFAULT]
 
-        # <-- Enter your code here <--#
-        pass
 
     # Step 2: Convert the model and save it to the provided filename
 
@@ -221,6 +219,7 @@ def quantize_and_evaluate(model, X_test, y_test_cat, quant_type, filename):
     output_details = interpreter.get_output_details()
     input_dtype = input_details[0]['dtype']
     input_scale, input_zero_point = input_details[0]['quantization']
+    output_dtype = output_details[0]['dtype']
 
 
     coll_preds = []
@@ -234,6 +233,8 @@ def quantize_and_evaluate(model, X_test, y_test_cat, quant_type, filename):
 
         interpreter.set_tensor(input_details[0]['index'], input_data)
         interpreter.invoke()
+        # ~ # # deQuantize if necessary
+        # ~ # if output_dtype == np.int8:
         output_data = interpreter.get_tensor(output_details[0]['index'])
         coll_preds.append(output_data[0]) # Get the first element of the prediction output
 
@@ -252,6 +253,8 @@ def quantize_and_evaluate(model, X_test, y_test_cat, quant_type, filename):
 # - 'dynamic' → save as 'model_dynamic.tflite'
 
 quantize_and_evaluate(model, X_test_norm, y_test_ohenc, 'int8', 'model_int8.tflite')
+quantize_and_evaluate(model, X_test_norm, y_test_ohenc, 'float16', 'model_float16.tflite')
+quantize_and_evaluate(model, X_test_norm, y_test_ohenc, 'dynamic', 'model_dynamic.tflite')
 
 
 # """## Problem 1 - Part (c)
@@ -259,32 +262,65 @@ quantize_and_evaluate(model, X_test_norm, y_test_ohenc, 'int8', 'model_int8.tfli
 # ### Pruning
 # """
 
-# # Step 1: Define a pruning schedule using tfmot.sparsity.keras.PolynomialDecay
-# # HINT:
-# # - Use initial_sparsity = 0.5 and final_sparsity = 0.7
-# # - Set end_step to total training steps (approx. dataset_size / batch_size * epochs)
+# Step 1: Define a pruning schedule using tfmot.sparsity.keras.PolynomialDecay
+# HINT:
+# - Use initial_sparsity = 0.5 and final_sparsity = 0.7
+# - Set end_step to total training steps (approx. dataset_size / batch_size * epochs)
 
-# # <-- Enter your code here <--#
+prune_low_magnitude = tfmot.sparsity.keras.prune_low_magnitude
+# Compute end step to finish pruning after 20 epochs.
+batch_size = 8
+epochs = 20
+validation_split = 0.2 # 20% of training set will be used for validation set. 
 
-# # Step 2: Build a Sequential model with 3 pruned Dense layers:
-# # - Dense(64, relu)
-# # - Dense(32, relu)
-# # - Dense(3, softmax)
-# # Make sure each Dense layer is wrapped with prune_low_magnitude()
+num_images = X_train.shape[0] * (1 - validation_split)
+end_step = np.ceil(num_images / batch_size).astype(np.int32) * epochs
 
-# # <-- Enter your code here <--#
+pruning_params = {
+    'pruning_schedule': tfmot.sparsity.keras.PolynomialDecay(
+        initial_sparsity=0.5,
+        final_sparsity=0.7,
+        begin_step=0,
+        end_step=end_step
+    )
+}
 
-# # Step 3: Compile the model with categorical_crossentropy and accuracy
-# # - Train for 10 epochs with batch_size=8 and validation_split=0.2
-# # - Add tfmot.sparsity.keras.UpdatePruningStep() to the callbacks list
+# Step 2: Build a Sequential model with 3 pruned Dense layers:
+# - Dense(64, relu)
+# - Dense(32, relu)
+# - Dense(3, softmax)
+# Make sure each Dense layer is wrapped with prune_low_magnitude()
 
-# # <-- Enter your code here <--#
+model_to_prune = Sequential(
+    [
+        Input(shape=(X_train.shape[1],)),
+        prune_low_magnitude(Dense(64, activation="relu"), **pruning_params),
+        prune_low_magnitude(Dense(32, activation="relu"), **pruning_params),
+        prune_low_magnitude(Dense(3, activation="softmax"), **pruning_params),
 
-# # Step 4: Do any necessary post-processing (if needed) on the pruned model
-# # and save it using appropriate specifications to a TFLite file named "model_pruned.tflite".
-# # Print the final file size in KB.
+    ]
+)
 
-# # <-- Enter your code here <--#
+# Step 3: Compile the model with categorical_crossentropy and accuracy
+# - Train for 10 epochs with batch_size=8 and validation_split=0.2
+# - Add tfmot.sparsity.keras.UpdatePruningStep() to the callbacks list
+callbacks = [tfmot.sparsity.keras.UpdatePruningStep()]
+model_to_prune.compile(optimizer='adam', loss='categorical_crossentropy', metrics=['accuracy'])
+model_to_prune.fit(
+    X_train_norm,
+    y_train_ohenc,
+    epochs=epochs,
+    batch_size=batch_size,
+    validation_split=validation_split,
+    callbacks=callbacks  # Add the required callback
+)
+model_to_prune.summary()
+
+# Step 4: Do any necessary post-processing (if needed) on the pruned model
+# and save it using appropriate specifications to a TFLite file named "model_pruned.tflite".
+# Print the final file size in KB.
+
+# <-- Enter your code here <--#
 
 # # Step 5: Evaluate using the stripped model
 # # - Use np.argmax for predictions
