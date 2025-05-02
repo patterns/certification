@@ -342,7 +342,6 @@ output_dtype = output_details[0]['dtype']
 coll_preds = []
 for i in range(len(X_test_norm)):
     input_data = X_test_norm[i:i+1].astype("float32")
-
     # Quantize if necessary
     if input_dtype == np.int8:
         input_data = input_data / input_scale + input_zero_point
@@ -363,38 +362,43 @@ print(classification_report(y_true, y_pred))
 print(f"Pruned Confusion matrix:")
 print(confusion_matrix(y_true, y_pred))
 
-# """## Problem 1 - Part (d)
+"""## Problem 1 - Part (d)
 
-# ### Knowledge Distillation
-# """
+### Knowledge Distillation
+"""
 
-# # Step 1: Define a Sequential model for Student with:
-# # - Dense(32, relu)
-# # - Dense(16, relu)
-# # - Dense(3, softmax)
+# Step 1: Define a Sequential model for Student with:
+# - Dense(32, relu)
+# - Dense(16, relu)
+# - Dense(3, softmax)
+student_model = Sequential(
+    [
+        Input(shape=(X_train.shape[1],)),
+        Dense(32, activation="relu"),
+        Dense(16, activation="relu"),
+        Dense(3, activation="softmax"),
+    ]
+)
 
-# # <-- Enter your code here <--#
+# Step 2: Use model.predict() on X_train_scaled to obtain teacher soft labels
+teacher_preds_soft = model.predict(X_train_norm)
 
-# # Step 2: Use model.predict() on X_train_scaled to obtain teacher soft labels
+# Step 3:
+# (a) Concatenate hard (y_train_cat) and soft (teacher_preds_soft) labels along axis=1
+#     to create a combined label for distillation
+# (b) Define a custom distillation_loss() function that:
+#     - Splits y_true_combined into y_true_hard and y_true_soft
+#     - Computes two losses (both using categorical_crossentropy)
+#     - Combines them with a weight factor alpha = 0.5
 
-# # <-- Enter your code here <--#
+# Hint: Use slicing [:, :3] and [:, 3:] to split the combined labels
 
-# # Step 3:
-# # (a) Concatenate hard (y_train_cat) and soft (teacher_preds_soft) labels along axis=1
-# #     to create a combined label for distillation
-# # (b) Define a custom distillation_loss() function that:
-# #     - Splits y_true_combined into y_true_hard and y_true_soft
-# #     - Computes two losses (both using categorical_crossentropy)
-# #     - Combines them with a weight factor alpha = 0.5
+combined_label = np.concatenate((y_train_ohenc , teacher_preds_soft), axis=1)
 
-# # Hint: Use slicing [:, :3] and [:, 3:] to split the combined labels
+def distillation_loss(y_true_combined, y_pred):
 
-# # <-- Enter your code here <--#
-
-# def distillation_loss(y_true_combined, y_pred):
-
-    # # <-- Enter your code here: implement hard/soft label separation and weighted loss <--#
-    # pass
+    # <-- Enter your code here: implement hard/soft label separation and weighted loss <--#
+    pass
 
 # # Step 4: Compile the student model with Adam optimizer and distillation_loss
 # # - Train for 10 epochs, batch_size=8, validation_split=0.2
