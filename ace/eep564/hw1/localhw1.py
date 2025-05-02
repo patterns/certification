@@ -267,6 +267,7 @@ quantize_and_evaluate(model, X_test_norm, y_test_ohenc, 'dynamic', 'model_dynami
 # - Use initial_sparsity = 0.5 and final_sparsity = 0.7
 # - Set end_step to total training steps (approx. dataset_size / batch_size * epochs)
 
+# for help see https://www.tensorflow.org/model_optimization/guide/pruning/pruning_with_keras#fine-tune_pre-trained_model_with_pruning
 prune_low_magnitude = tfmot.sparsity.keras.prune_low_magnitude
 # Compute end step to finish pruning after 20 epochs.
 batch_size = 8
@@ -320,13 +321,47 @@ model_to_prune.summary()
 # and save it using appropriate specifications to a TFLite file named "model_pruned.tflite".
 # Print the final file size in KB.
 
-# <-- Enter your code here <--#
+stripped_model = tfmot.sparsity.keras.strip_pruning(model_to_prune)
+# Convert the stripped model with experimental sparsity optimization
+converter = tf.lite.TFLiteConverter.from_keras_model(stripped_model)
+converter.optimizations = [tf.lite.Optimize.EXPERIMENTAL_SPARSITY]
+tflite_model_sparse = converter.convert()
+with open("model_pruned.tflite", "wb") as f:
+    f.write(tflite_model_sparse)
 
-# # Step 5: Evaluate using the stripped model
-# # - Use np.argmax for predictions
-# # - Print classification_report and confusion_matrix
+# Step 5: Evaluate using the stripped model
+# - Use np.argmax for predictions
+# - Print classification_report and confusion_matrix
+interpreter = tf.lite.Interpreter(model_path="model_pruned.tflite")
+interpreter.allocate_tensors()
+input_details = interpreter.get_input_details()
+output_details = interpreter.get_output_details()
+input_dtype = input_details[0]['dtype']
+input_scale, input_zero_point = input_details[0]['quantization']
+output_dtype = output_details[0]['dtype']
+coll_preds = []
+for i in range(len(X_test_norm)):
+    input_data = X_test_norm[i:i+1].astype("float32")
 
-# # <-- Enter your code here <--#
+    # Quantize if necessary
+    if input_dtype == np.int8:
+        input_data = input_data / input_scale + input_zero_point
+        input_data = np.round(input_data).astype(np.int8)
+
+    interpreter.set_tensor(input_details[0]['index'], input_data)
+    interpreter.invoke()
+    # ~ # # deQuantize if necessary
+    # ~ # if output_dtype == np.int8:
+    output_data = interpreter.get_tensor(output_details[0]['index'])
+    coll_preds.append(output_data[0]) # Get the first element of the prediction output
+
+####print(f"\n📦 Pruned TFLite Model Size: {os.path.getsize(filename) / 1024:.2f} KB")
+y_pred = np.argmax(coll_preds, axis=1) 
+y_true = np.argmax(y_test_ohenc, axis=1)
+print(f"Pruned Classification report:")
+print(classification_report(y_true, y_pred))
+print(f"Pruned Confusion matrix:")
+print(confusion_matrix(y_true, y_pred))
 
 # """## Problem 1 - Part (d)
 
