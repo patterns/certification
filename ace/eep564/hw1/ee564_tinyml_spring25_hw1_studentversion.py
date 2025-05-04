@@ -7,8 +7,8 @@ Original file is located at
     https://colab.research.google.com/drive/1U8PS9Lpp-2Z3XSDiEiigln_6OwvrDCuu
 """
 
-# ~ !pip uninstall -y keras tensorflow tensorflow-model-optimization
-# ~ !pip install tensorflow==2.12 tensorflow-model-optimization
+!pip uninstall -y keras tensorflow tensorflow-model-optimization
+!pip install tensorflow==2.12 tensorflow-model-optimization
 
 # ============================
 # Set backend early
@@ -49,17 +49,7 @@ column_names = [
     'Total phenols', 'Flavanoids', 'Nonflavanoid phenols', 'Proanthocyanins',
     'Color intensity', 'Hue', 'OD280/OD315 of diluted wines', 'Proline'
 ]
-# ~ df = pd.read_csv('wine.data', header=None, names=column_names)
-from pathlib import Path
-# specify tarball in local fs
-dataset_url = "file://" + os.path.abspath("./wine.data")
-ds_name = "wine-data"
-archive = tf.keras.utils.get_file(fname=ds_name, origin=dataset_url, extract=False)
-data_dir = Path(archive).parent
-ds_home = Path.home().joinpath(".keras/datasets")
-assert data_dir==ds_home, "expect that ds is extracted under ~/.keras/dataset"
-df = pd.read_csv(archive, header=None, names=column_names)
-
+df = pd.read_csv('/content/drive/MyDrive/eep564/wine.data', header=None, names=column_names)
 
 # Number of classes
 num_classes = df['Class'].nunique()
@@ -77,6 +67,9 @@ print("\nFeature statistics:\n", feature_stats)
 class_counts = df['Class'].value_counts().sort_index()
 print("\nClass distribution:\n", class_counts)
 
+from google.colab import drive
+drive.mount('/content/drive')
+
 """## Problem 1 - Part (a)
 ### Base Model Training and Evaluation
 
@@ -93,8 +86,6 @@ y = df["Class"].sub(1).values
 # Step 2: Perform a train-test split (70% train, 30% test) using random_state=42
 
 X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.3, random_state=42)
-# print(X_train.shape)
-# print(X_test.shape)
 
 # Step 3: Use StandardScaler to normalize the features
 # - Fit on X_train and transform both X_train and X_test
@@ -136,7 +127,7 @@ baseline_accuracy = model.evaluate(X_test_norm, y_test_ohenc, verbose=0)[1]
 print(f"Baseline Model Accuracy: {baseline_accuracy:.4f}")
 predictions = model.predict(X_test_norm)
 # Convert predictions to class labels (0, 1, or 2)
-predicted_labels = np.argmax(predictions, axis=1) 
+predicted_labels = np.argmax(predictions, axis=1)
 # Convert y_test_ohenc back to class labels if necessary
 true_labels = np.argmax(y_test_ohenc, axis=1)
 print("Classification report:")
@@ -159,6 +150,7 @@ print(f"model_base.tflite: {os.path.getsize('model_base.tflite') / 1024:.2f} KB"
 ### Quantization (int8, float16, dynamic range)
 
 """
+
 def representative_data_gen():
     for input_value in X_train_norm[:100]:
         yield [input_value.astype("float32")]
@@ -179,6 +171,7 @@ def quantize_and_evaluate(model, X_test, y_test_cat, quant_type, filename):
         # (a) Enable default optimizations
         # (b) Define a representative dataset generator (e.g., first 100 samples from X_train_scaled)
         # (c) Set inference_input_type and inference_output_type to tf.int8
+
         converter.optimizations = [tf.lite.Optimize.DEFAULT]
         converter.representative_dataset = representative_data_gen
         converter.target_spec.supported_types = [tf.int8]
@@ -188,13 +181,14 @@ def quantize_and_evaluate(model, X_test, y_test_cat, quant_type, filename):
     elif quant_type == 'float16':
         # (a) Enable default optimizations
         # (b) Set supported_types to [tf.float16]
+
         converter.optimizations = [tf.lite.Optimize.DEFAULT]
         converter.target_spec.supported_types = [tf.float16]
 
     elif quant_type == 'dynamic':
         # (a) Enable default optimizations
-        converter.optimizations = [tf.lite.Optimize.DEFAULT]
 
+        converter.optimizations = [tf.lite.Optimize.DEFAULT]
 
     # Step 2: Convert the model and save it to the provided filename
 
@@ -219,9 +213,8 @@ def quantize_and_evaluate(model, X_test, y_test_cat, quant_type, filename):
     output_details = interpreter.get_output_details()
     input_dtype = input_details[0]['dtype']
     input_scale, input_zero_point = input_details[0]['quantization']
-    output_dtype = output_details[0]['dtype']
 
-
+    ##correct_predictions = 0
     coll_preds = []
     for i in range(len(X_test)):
         input_data = X_test[i:i+1].astype("float32")
@@ -233,14 +226,13 @@ def quantize_and_evaluate(model, X_test, y_test_cat, quant_type, filename):
 
         interpreter.set_tensor(input_details[0]['index'], input_data)
         interpreter.invoke()
-        # ~ # # deQuantize if necessary
-        # ~ # if output_dtype == np.int8:
         output_data = interpreter.get_tensor(output_details[0]['index'])
         coll_preds.append(output_data[0]) # Get the first element of the prediction output
 
     # Step 4: Report results
     print(f"\n📦 {quant_type.upper()} TFLite Model Size: {os.path.getsize(filename) / 1024:.2f} KB")
-    y_pred = np.argmax(coll_preds, axis=1) 
+
+    y_pred = np.argmax(coll_preds, axis=1)
     y_true = np.argmax(y_test_cat, axis=1)
     print(f"{quant_type.upper()} Classification report:")
     print(classification_report(y_true, y_pred))
@@ -256,23 +248,20 @@ quantize_and_evaluate(model, X_test_norm, y_test_ohenc, 'int8', 'model_int8.tfli
 quantize_and_evaluate(model, X_test_norm, y_test_ohenc, 'float16', 'model_float16.tflite')
 quantize_and_evaluate(model, X_test_norm, y_test_ohenc, 'dynamic', 'model_dynamic.tflite')
 
+"""## Problem 1 - Part (c)
 
-# """## Problem 1 - Part (c)
-
-# ### Pruning
-# """
+### Pruning
+"""
 
 # Step 1: Define a pruning schedule using tfmot.sparsity.keras.PolynomialDecay
 # HINT:
 # - Use initial_sparsity = 0.5 and final_sparsity = 0.7
 # - Set end_step to total training steps (approx. dataset_size / batch_size * epochs)
-
-# for help see https://www.tensorflow.org/model_optimization/guide/pruning/pruning_with_keras#fine-tune_pre-trained_model_with_pruning
 prune_low_magnitude = tfmot.sparsity.keras.prune_low_magnitude
 # Compute end step to finish pruning after 20 epochs.
 batch_size = 8
 epochs = 20
-validation_split = 0.2 # 20% of training set will be used for validation set. 
+validation_split = 0.2 # 20% of training set will be used for validation set.
 
 num_images = X_train.shape[0] * (1 - validation_split)
 end_step = np.ceil(num_images / batch_size).astype(np.int32) * epochs
@@ -291,7 +280,6 @@ pruning_params = {
 # - Dense(32, relu)
 # - Dense(3, softmax)
 # Make sure each Dense layer is wrapped with prune_low_magnitude()
-
 model_to_prune = Sequential(
     [
         Input(shape=(X_train.shape[1],)),
@@ -315,12 +303,11 @@ model_to_prune.fit(
     validation_split=validation_split,
     callbacks=callbacks  # Add the required callback
 )
-model_to_prune.summary()
+####model_to_prune.summary()
 
 # Step 4: Do any necessary post-processing (if needed) on the pruned model
 # and save it using appropriate specifications to a TFLite file named "model_pruned.tflite".
 # Print the final file size in KB.
-
 stripped_model = tfmot.sparsity.keras.strip_pruning(model_to_prune)
 # Convert the stripped model with experimental sparsity optimization
 converter = tf.lite.TFLiteConverter.from_keras_model(stripped_model)
@@ -332,6 +319,7 @@ with open("model_pruned.tflite", "wb") as f:
 # Step 5: Evaluate using the stripped model
 # - Use np.argmax for predictions
 # - Print classification_report and confusion_matrix
+
 interpreter = tf.lite.Interpreter(model_path="model_pruned.tflite")
 interpreter.allocate_tensors()
 input_details = interpreter.get_input_details()
@@ -342,6 +330,7 @@ output_dtype = output_details[0]['dtype']
 coll_preds = []
 for i in range(len(X_test_norm)):
     input_data = X_test_norm[i:i+1].astype("float32")
+
     # Quantize if necessary
     if input_dtype == np.int8:
         input_data = input_data / input_scale + input_zero_point
@@ -355,7 +344,7 @@ for i in range(len(X_test_norm)):
     coll_preds.append(output_data[0]) # Get the first element of the prediction output
 
 ####print(f"\n📦 Pruned TFLite Model Size: {os.path.getsize(filename) / 1024:.2f} KB")
-y_pred = np.argmax(coll_preds, axis=1) 
+y_pred = np.argmax(coll_preds, axis=1)
 y_true = np.argmax(y_test_ohenc, axis=1)
 print(f"Pruned Classification report:")
 print(classification_report(y_true, y_pred))
@@ -371,6 +360,7 @@ print(confusion_matrix(y_true, y_pred))
 # - Dense(32, relu)
 # - Dense(16, relu)
 # - Dense(3, softmax)
+
 student_model = Sequential(
     [
         Input(shape=(X_train.shape[1],)),
@@ -411,7 +401,6 @@ def distillation_loss(y_true_combined, y_pred):
     )
     return weight_a * hard_loss + (1 - weight_a) * soft_loss
 
-
 # Step 4: Compile the student model with Adam optimizer and distillation_loss
 # - Train for 10 epochs, batch_size=8, validation_split=0.2
 optimizer = tf.keras.optimizers.Adam()
@@ -437,11 +426,11 @@ for epoch in range(10):  # Number of epochs
         # update weights
         optimizer.apply_gradients(zip(grads, student_model.trainable_weights))
 
-
 # Step 5: Convert the student model to TFLite
 # - Use appropriate settings for classification models
 # - Save as "model_kd.tflite"
 # - Print the file size in KB
+
 converter = tf.lite.TFLiteConverter.from_keras_model(student_model)
 converter.optimizations = [tf.lite.Optimize.DEFAULT]
 converter.representative_dataset = representative_data_gen
@@ -452,291 +441,291 @@ with open("model_kd.tflite", "wb") as f:
 print("Quantized Student Model saved.")
 print(f"Kd Model Size: {os.path.getsize('model_kd.tflite') / 1024:.2f} KB")
 
-
 # Step 7: Use student_model.predict() to obtain predictions on X_test_scaled
 # - Print classification_report and confusion_matrix
+
 student_predictions = student_model.predict(X_test_norm)
-predicted_labels = np.argmax(student_predictions, axis=1) 
+predicted_labels = np.argmax(student_predictions, axis=1)
 print(f"Kd Classification report:")
 print(classification_report(true_labels, predicted_labels))
 print(f"Kd Confusion matrix:")
 print(confusion_matrix(true_labels, predicted_labels))
 
-# """## Problem 1 - Part (e)
+"""## Problem 1 - Part (e)
 
-# ### Possibility of Further Model Size Reduction
+### Possibility of Further Model Size Reduction
 
-# Can you **further reduce the model size** beyond the smallest model obtained in parts **(b)**, **(c)**, or **(d)**, **without sacrificing significant classification performance**?
+Can you **further reduce the model size** beyond the smallest model obtained in parts **(b)**, **(c)**, or **(d)**, **without sacrificing significant classification performance**?
 
-# Your task is to:
+Your task is to:
 
-# 1. **Analyze and compare** the results from previous parts: Which model had the smallest size? Which performed best?
+1. **Analyze and compare** the results from previous parts: Which model had the smallest size? Which performed best?
 
-# 2. **Propose a strategy** that combines or enhances techniques learned so far.
+2. **Propose a strategy** that combines or enhances techniques learned so far.
 
-# 3. **Implement** your proposed solution.
+3. **Implement** your proposed solution.
 
-# 4. **Evaluate** the resulting model using both:
-   # - TFLite model size (in KB)
-   # - Classification performance (accuracy and report)
+4. **Evaluate** the resulting model using both:
+   - TFLite model size (in KB)
+   - Classification performance (accuracy and report)
 
-# 5. **Justify your results:**
-   # - If further size reduction is **not** possible without major loss of accuracy, explain why using evidence from your experiments.
-   # - If you succeed in reducing the size **further**, highlight what change made the biggest difference.
+5. **Justify your results:**
+   - If further size reduction is **not** possible without major loss of accuracy, explain why using evidence from your experiments.
+   - If you succeed in reducing the size **further**, highlight what change made the biggest difference.
 
-# """
+"""
 
-# # <-- Justify your answer and if needed enter your code here <--#
+# <-- Justify your answer and if needed enter your code here <--#
 
-# """
+"""
 
-# ---
+---
 
 
-# # Problem 2"""
+# Problem 2"""
 
-# # Load dataset
-# df = pd.read_csv("AirQualityUCI.csv", sep=";", decimal=",", skipfooter=1, engine="python")
-# df = df.drop(columns=["Unnamed: 15", "Unnamed: 16"])
-# df["Datetime"] = pd.to_datetime(df["Date"] + " " + df["Time"], format="%d/%m/%Y %H.%M.%S")
-# df = df.drop(columns=["Date", "Time"])
-# for col in df.columns:
-    # if df[col].dtype == 'object':
-        # df[col] = df[col].str.replace(',', '.').astype(float)
-# df.dropna(inplace=True)
+# Load dataset
+df = pd.read_csv("AirQualityUCI.csv", sep=";", decimal=",", skipfooter=1, engine="python")
+df = df.drop(columns=["Unnamed: 15", "Unnamed: 16"])
+df["Datetime"] = pd.to_datetime(df["Date"] + " " + df["Time"], format="%d/%m/%Y %H.%M.%S")
+df = df.drop(columns=["Date", "Time"])
+for col in df.columns:
+    if df[col].dtype == 'object':
+        df[col] = df[col].str.replace(',', '.').astype(float)
+df.dropna(inplace=True)
 
-# # Number of data columns (excluding the Date Time column)
-# num_cols = df.shape[1]
-# print("Number of columns:", num_cols)
+# Number of data columns (excluding the Date Time column)
+num_cols = df.shape[1]
+print("Number of columns:", num_cols)
 
-# # Basic stats: min, max, mean, std
-# col_stats = df.describe().T[['min', 'max', 'mean', 'std']]
-# print("\nColumn statistics:\n", col_stats)
+# Basic stats: min, max, mean, std
+col_stats = df.describe().T[['min', 'max', 'mean', 'std']]
+print("\nColumn statistics:\n", col_stats)
 
-# """## Problem 2 - Part (a)
-# ### Base Model Training and Evaluation
-# """
+"""## Problem 2 - Part (a)
+### Base Model Training and Evaluation
+"""
 
-# # Step 1: Drop the 'Datetime' column and scale all remaining features to [0, 1]
+# Step 1: Drop the 'Datetime' column and scale all remaining features to [0, 1]
 
-# # <-- Enter your code here <--#
+# <-- Enter your code here <--#
 
-# # Step 2: Implement create_sequences_all_to_all(data, seq_length) function
-# # - Output shape of X should be (num_sequences, 24, num_features)
-# # - Output shape of y should be (num_sequences, num_features)
-# # HINTs:
-# # Function should generate sequences of length 24, where:
-# #     - Each input sequence X[i] is a 24-time-step window
-# #     - The corresponding label y[i] is the value of all features at time step i + 24
+# Step 2: Implement create_sequences_all_to_all(data, seq_length) function
+# - Output shape of X should be (num_sequences, 24, num_features)
+# - Output shape of y should be (num_sequences, num_features)
+# HINTs:
+# Function should generate sequences of length 24, where:
+#     - Each input sequence X[i] is a 24-time-step window
+#     - The corresponding label y[i] is the value of all features at time step i + 24
 
-# # <-- Enter your code here <--#
+# <-- Enter your code here <--#
 
-# # Step 3: Perform an 80/20 train-test split
+# Step 3: Perform an 80/20 train-test split
 
-# # <-- Enter your code here <--#
+# <-- Enter your code here <--#
 
-# # Step 4: Build, Compile, and Train the LSTM model
-# # - Create a Keras Sequential model with:
-# #     - LSTM(64, relu)
-# #     - Dense(32, relu)
-# #     - Dense(output_dim = number of features)
-# # - Use 'adam' optimizer and 'mse' loss
-# # - Train for 10 epochs with batch_size=32 and validation_split=0.1
+# Step 4: Build, Compile, and Train the LSTM model
+# - Create a Keras Sequential model with:
+#     - LSTM(64, relu)
+#     - Dense(32, relu)
+#     - Dense(output_dim = number of features)
+# - Use 'adam' optimizer and 'mse' loss
+# - Train for 10 epochs with batch_size=32 and validation_split=0.1
 
-# # <-- Enter your code here <--#
+# <-- Enter your code here <--#
 
-# # Step 5: Evaluate model using r2_score
-# # - Print overall R² and per-feature R²
-# # - Use model.predict() on X_test
+# Step 5: Evaluate model using r2_score
+# - Print overall R² and per-feature R²
+# - Use model.predict() on X_test
 
-# # <-- Enter your code here <--#
+# <-- Enter your code here <--#
 
-# # Step 6: Convert and save the trained model to TFLite using float32 precision
-# # - Use TFLITE_BUILTINS and SELECT_TF_OPS
-# # - Save as 'model_float32.tflite'
-# # - Print model size
+# Step 6: Convert and save the trained model to TFLite using float32 precision
+# - Use TFLITE_BUILTINS and SELECT_TF_OPS
+# - Save as 'model_float32.tflite'
+# - Print model size
 
-# # <-- Enter your code here <--#
+# <-- Enter your code here <--#
 
-# """## Problem 2 - Part (b)
+"""## Problem 2 - Part (b)
 
-# ### Quantization (int8, float16, dynamic range)
-# """
+### Quantization (int8, float16, dynamic range)
+"""
 
-# def convert_and_evaluate(model, X_test, y_test, quant_type, filename):
-    # # Create a TFLiteConverter instance
-    # converter = tf.lite.TFLiteConverter.from_keras_model(model)
+def convert_and_evaluate(model, X_test, y_test, quant_type, filename):
+    # Create a TFLiteConverter instance
+    converter = tf.lite.TFLiteConverter.from_keras_model(model)
 
-    # # Ensure LSTM compatibility
-    # converter.target_spec.supported_ops = [
-        # tf.lite.OpsSet.TFLITE_BUILTINS,
-        # tf.lite.OpsSet.SELECT_TF_OPS
-    # ]
-    # converter._experimental_lower_tensor_list_ops = False
-    # converter.experimental_enable_resource_variables = True
+    # Ensure LSTM compatibility
+    converter.target_spec.supported_ops = [
+        tf.lite.OpsSet.TFLITE_BUILTINS,
+        tf.lite.OpsSet.SELECT_TF_OPS
+    ]
+    converter._experimental_lower_tensor_list_ops = False
+    converter.experimental_enable_resource_variables = True
 
-    # # Step 1: Apply quantization settings
-    # if quant_type == 'int8':
-        # # Define representative dataset generator
-        # # Set inference_input_type and inference_output_type to tf.int8
-        # # Enable default optimizations
+    # Step 1: Apply quantization settings
+    if quant_type == 'int8':
+        # Define representative dataset generator
+        # Set inference_input_type and inference_output_type to tf.int8
+        # Enable default optimizations
 
-        # # <-- Enter your code here <--#
-        # pass
+        # <-- Enter your code here <--#
+        pass
 
-    # elif quant_type == 'float16':
-        # # Enable default optimizations
-        # # Set target_spec.supported_types to [tf.float16]
+    elif quant_type == 'float16':
+        # Enable default optimizations
+        # Set target_spec.supported_types to [tf.float16]
 
-        # # <-- Enter your code here <--#
-        # pass
+        # <-- Enter your code here <--#
+        pass
 
-    # elif quant_type == 'dynamic':
-        # # Enable default optimizations
+    elif quant_type == 'dynamic':
+        # Enable default optimizations
 
-        # # <-- Enter your code here <--#
-        # pass
+        # <-- Enter your code here <--#
+        pass
 
-    # # Step 2: Convert and save the model to `filename`
+    # Step 2: Convert and save the model to `filename`
 
-    # # <-- Enter your code here <--#
+    # <-- Enter your code here <--#
 
-    # # Step 3: Run inference using the TFLite interpreter
-    # # - Allocate tensors
-    # # - Handle quantized input/output as needed
-    # # - Collect model predictions (use dequantization if applicable)
+    # Step 3: Run inference using the TFLite interpreter
+    # - Allocate tensors
+    # - Handle quantized input/output as needed
+    # - Collect model predictions (use dequantization if applicable)
 
-    # # <-- Enter your code here <--#
+    # <-- Enter your code here <--#
 
-    # # Step 4: Return model size and R² scores (overall + per feature)
-    # # Hint: Use r2_score from sklearn
+    # Step 4: Return model size and R² scores (overall + per feature)
+    # Hint: Use r2_score from sklearn
 
-    # # <-- Enter your code here <--#
+    # <-- Enter your code here <--#
 
-# # Step 5: Use the function above to create and evaluate three quantized models:
-# # - 'int8' → save as 'model_int8.tflite'
-# # - 'float16' → save as 'model_float16.tflite'
-# # - 'dynamic' → save as 'model_dynamic.tflite'
-# # For each quantized model Print out:
-# # - Model name
-# # - Size in KB
-# # - Overall R²
-# # - Per-feature R² for each feature (Feature 1, Feature 2, ..., etc.)
+# Step 5: Use the function above to create and evaluate three quantized models:
+# - 'int8' → save as 'model_int8.tflite'
+# - 'float16' → save as 'model_float16.tflite'
+# - 'dynamic' → save as 'model_dynamic.tflite'
+# For each quantized model Print out:
+# - Model name
+# - Size in KB
+# - Overall R²
+# - Per-feature R² for each feature (Feature 1, Feature 2, ..., etc.)
 
-# # <-- Enter your code here <--#
+# <-- Enter your code here <--#
 
-# """## Problem 2 - Part (c)
+"""## Problem 2 - Part (c)
 
-# ### Pruning
-# """
+### Pruning
+"""
 
-# # Step 1: Create a PolynomialDecay schedule that gradually increases sparsity during training.
-# # Define a pruning schedule with:
-# # - initial_sparsity = 0.5
-# # - final_sparsity = 0.8
-# # - end_step based on number of training steps (hint: dataset size / batch size * epochs)
+# Step 1: Create a PolynomialDecay schedule that gradually increases sparsity during training.
+# Define a pruning schedule with:
+# - initial_sparsity = 0.5
+# - final_sparsity = 0.8
+# - end_step based on number of training steps (hint: dataset size / batch size * epochs)
 
-# # <-- Enter your code here <--#
+# <-- Enter your code here <--#
 
-# # Step 2: Build a Functional model with:
-# # - Input layer
-# # - LSTM(64, relu)
-# # - Dense(32, relu) [pruned]
-# # - Dense(output_dim, linear) [pruned]
-# # HINT: Wrap both Dense layers with prune_low_magnitude(...) using the schedule
+# Step 2: Build a Functional model with:
+# - Input layer
+# - LSTM(64, relu)
+# - Dense(32, relu) [pruned]
+# - Dense(output_dim, linear) [pruned]
+# HINT: Wrap both Dense layers with prune_low_magnitude(...) using the schedule
 
-# # <-- Enter your code here <--#
+# <-- Enter your code here <--#
 
-# # Step 3: Compile and train the model
-# # - Use 'adam' and 'mse'
-# # - Add tfmot.sparsity.keras.UpdatePruningStep() to callbacks
-# # - Train the pruned model for 15 epochs and include the pruning callback.
+# Step 3: Compile and train the model
+# - Use 'adam' and 'mse'
+# - Add tfmot.sparsity.keras.UpdatePruningStep() to callbacks
+# - Train the pruned model for 15 epochs and include the pruning callback.
 
-# # <-- Enter your code here <--#
+# <-- Enter your code here <--#
 
-# # Step 4: Finalize the pruned model before exporting it to TFLite
-# # Do any necessary post-processing (if needed) before exporting the model.
+# Step 4: Finalize the pruned model before exporting it to TFLite
+# Do any necessary post-processing (if needed) before exporting the model.
 
-# # <-- Enter your code here <--#
+# <-- Enter your code here <--#
 
-# # Step 5: Export the model to TFLite format
-# # - Use compression optimizations suitable for sparsity-aware models
-# # - Save as "model_pruned.tflite"
-# # - Print model size in KB
+# Step 5: Export the model to TFLite format
+# - Use compression optimizations suitable for sparsity-aware models
+# - Save as "model_pruned.tflite"
+# - Print model size in KB
 
-# # <-- Enter your code here <--#
+# <-- Enter your code here <--#
 
-# # Step 6: Predict using the finalized model (not the TFLite version)
-# # - Use r2_score to compute overall and feature-wise performance
+# Step 6: Predict using the finalized model (not the TFLite version)
+# - Use r2_score to compute overall and feature-wise performance
 
-# # <-- Enter your code here <--#
+# <-- Enter your code here <--#
 
-# """## Problem 2 - Part (d)
+"""## Problem 2 - Part (d)
 
-# ### Knowledge Distillation
-# """
+### Knowledge Distillation
+"""
 
-# # Step 1: Generate soft predictions on X_train using LSTM model trained in Part (a) of Problem 2
+# Step 1: Generate soft predictions on X_train using LSTM model trained in Part (a) of Problem 2
 
-# # <-- Enter your code here <--#
+# <-- Enter your code here <--#
 
-# # Step 2: Define the student model:
-# # - LSTM(32, relu)
-# # - Dense(16, relu)
-# # - Dense(output_dim)
+# Step 2: Define the student model:
+# - LSTM(32, relu)
+# - Dense(16, relu)
+# - Dense(output_dim)
 
-# # <-- Enter your code here <--#
+# <-- Enter your code here <--#
 
-# # Step 3: Define distillation_loss(y_true_combined, y_pred)
-# # - y_true_combined contains both y_train and teacher_preds (concatenated)
-# # - Compute MSE for hard and soft labels
-# # - Use weighted average with alpha = 0.5
+# Step 3: Define distillation_loss(y_true_combined, y_pred)
+# - y_true_combined contains both y_train and teacher_preds (concatenated)
+# - Compute MSE for hard and soft labels
+# - Use weighted average with alpha = 0.5
 
-# # <-- Enter your code here <--#
+# <-- Enter your code here <--#
 
-# # Step 4: Concatenate y_train and teacher_preds along axis=1
+# Step 4: Concatenate y_train and teacher_preds along axis=1
 
-# # <-- Enter your code here <--#
+# <-- Enter your code here <--#
 
-# # Step 5: Compile and train the student model for 10 epochs
-# # - Use batch_size=32 and validation_split=0.1
+# Step 5: Compile and train the student model for 10 epochs
+# - Use batch_size=32 and validation_split=0.1
 
-# # <-- Enter your code here <--#
+# <-- Enter your code here <--#
 
-# # Step 6: Convert the student model to TFLite and save as "student_model.tflite"
-# # - Ensure proper support for LSTM ops
-# # - Compute and print TFLite file size for the student model (in KB)
+# Step 6: Convert the student model to TFLite and save as "student_model.tflite"
+# - Ensure proper support for LSTM ops
+# - Compute and print TFLite file size for the student model (in KB)
 
-# # <-- Enter your code here <--#
+# <-- Enter your code here <--#
 
-# # Step 7: Predict using the student model on X_test and Print summary of student model performance
-# # - Compute overall R²
-# # - Compute per-feature R² scores
+# Step 7: Predict using the student model on X_test and Print summary of student model performance
+# - Compute overall R²
+# - Compute per-feature R² scores
 
-# # <-- Enter your code here <--#
+# <-- Enter your code here <--#
 
-# """## Problem 2 - Part (e)
+"""## Problem 2 - Part (e)
 
-# ### Possibility of Further Model Size Reduction
+### Possibility of Further Model Size Reduction
 
-# Can you **further reduce the model size** beyond the smallest model obtained in parts **(b)**, **(c)**, or **(d)**, **without sacrificing significant regression performance**?
+Can you **further reduce the model size** beyond the smallest model obtained in parts **(b)**, **(c)**, or **(d)**, **without sacrificing significant regression performance**?
 
-# Your task is to:
+Your task is to:
 
-# 1. **Analyze and compare** the results from previous parts: Which model had the smallest size? Which performed best?
+1. **Analyze and compare** the results from previous parts: Which model had the smallest size? Which performed best?
 
-# 2. **Propose a strategy** that combines or enhances techniques learned so far.
+2. **Propose a strategy** that combines or enhances techniques learned so far.
 
-# 3. **Implement** your proposed solution.
+3. **Implement** your proposed solution.
 
-# 4. **Evaluate** the resulting model using both:
-   # - TFLite model size (in KB)
-   # - Regression performance (overall $R^2$ value and feature-wise $R^2$ values)
+4. **Evaluate** the resulting model using both:
+   - TFLite model size (in KB)
+   - Regression performance (overall $R^2$ value and feature-wise $R^2$ values)
 
-# 5. **Justify your results:**
-   # - If further size reduction is **not** possible without major loss of $R^2$ value, explain why using evidence from your experiments.
-   # - If you succeed in reducing the size **further**, highlight what change made the biggest difference.
+5. **Justify your results:**
+   - If further size reduction is **not** possible without major loss of $R^2$ value, explain why using evidence from your experiments.
+   - If you succeed in reducing the size **further**, highlight what change made the biggest difference.
 
-# """
+"""
 
-# # <-- Justify your answer and if needed enter your code here <--#
+# <-- Justify your answer and if needed enter your code here <--#
