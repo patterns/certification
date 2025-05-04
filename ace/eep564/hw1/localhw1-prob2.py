@@ -139,21 +139,39 @@ X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_
 #     - Dense(output_dim = number of features)
 # - Use 'adam' optimizer and 'mse' loss
 # - Train for 10 epochs with batch_size=32 and validation_split=0.1
+count_features = X.shape[2]
+####print(count_features)
+model = Sequential(
+    [
+        Input(shape=(X_train.shape[1], X_train.shape[2])),
+        LSTM(64, activation="relu"),
+        Dense(32, activation="relu"),
+        Dense(count_features),
+    ])
+model.compile(optimizer='adam', loss='mse')
+model.fit(X_train, y_train, epochs=10, batch_size=32, validation_split=0.1)
 
-# <-- Enter your code here <--#
+# Step 5: Evaluate model using r2_score
+# - Print overall R² and per-feature R²
+# - Use model.predict() on X_test
+y_pred = model.predict(X_test)
+print(f"Overall R²: {r2_score(y_test, y_pred)}")
 
-# # Step 5: Evaluate model using r2_score
-# # - Print overall R² and per-feature R²
-# # - Use model.predict() on X_test
+# Step 6: Convert and save the trained model to TFLite using float32 precision
+# - Use TFLITE_BUILTINS and SELECT_TF_OPS
+# - Save as 'model_float32.tflite'
+# - Print model size
+converter = tf.lite.TFLiteConverter.from_keras_model(model)
+converter.target_spec.supported_ops = [
+    tf.lite.OpsSet.TFLITE_BUILTINS,
+    tf.lite.OpsSet.SELECT_TF_OPS
+]
+converter.target_spec.supported_types = [tf.float32]
+tflite_model = converter.convert()
+with open("model_float32.tflite", "wb") as f:
+    f.write(tflite_model)
 
-# # <-- Enter your code here <--#
-
-# # Step 6: Convert and save the trained model to TFLite using float32 precision
-# # - Use TFLITE_BUILTINS and SELECT_TF_OPS
-# # - Save as 'model_float32.tflite'
-# # - Print model size
-
-# # <-- Enter your code here <--#
+print(f"model_float32.tflite: {os.path.getsize('model_float32.tflite') / 1024:.2f} KB")
 
 # """## Problem 2 - Part (b)
 
