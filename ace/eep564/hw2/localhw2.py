@@ -324,6 +324,7 @@ model = make_model(input_shape=(IMAGE_WIDTH, IMAGE_HEIGHT, 3), num_classes=10)
 keras.utils.plot_model(model, show_shapes=True)
 
 epochs = 30
+# ~ epochs = 2
 
 #<-------- Fix: Keras now expects model files to end with .keras, which is the updated format.
 #               This ensures the model saves correctly and prevents the ValueError.
@@ -339,56 +340,56 @@ model.fit(
     train_ds, epochs=epochs, callbacks=callbacks, validation_data=validation_ds,
 )
 
-# def predict_image(model, filename):
-  # img = keras.preprocessing.image.load_img(filename, target_size=(IMAGE_WIDTH, IMAGE_HEIGHT))
-  # img_array = keras.preprocessing.image.img_to_array(img)
-  # img_array = tf.expand_dims(img_array, 0)  # Create batch axis
-  # predictions = model.predict(img_array).flatten()
-  # predicted_label_index = np.argmax(predictions)
-  # predicted_score = predictions[predicted_label_index]
-  # return (predicted_label_index, predicted_score)
+def predict_image(model, filename):
+  img = keras.preprocessing.image.load_img(filename, target_size=(IMAGE_WIDTH, IMAGE_HEIGHT))
+  img_array = keras.preprocessing.image.img_to_array(img)
+  img_array = tf.expand_dims(img_array, 0)  # Create batch axis
+  predictions = model.predict(img_array).flatten()
+  predicted_label_index = np.argmax(predictions)
+  predicted_score = predictions[predicted_label_index]
+  return (predicted_label_index, predicted_score)
 
-# index, score = predict_image(model, "test/7/2.png")
+index, score = predict_image(model, "test/7/2.png")
 
-# print(index, score)
+print(index, score)
 
-# from IPython.display import Image, display
+from IPython.display import Image, display
 
-# SCORE_THRESHOLD = 0.75
+SCORE_THRESHOLD = 0.75
 
-# correct_count = 0
-# wrong_count = 0
-# discarded_count = 0
-# for label_dir in glob.glob("test/*"):
-  # label = int(label_dir.replace("test/", ""))
-  # for filename in glob.glob(label_dir + "/*.png"):
-    # index, score = predict_image(model, filename)
-    # if score < SCORE_THRESHOLD:
-      # discarded_count += 1
-      # continue
-    # if index == label:
-      # correct_count += 1
-    # else:
-      # wrong_count += 1
-      # print("%d expected, %d found with score %f" % (label, index, score))
-      # display(Image(filename=filename))
+correct_count = 0
+wrong_count = 0
+discarded_count = 0
+for label_dir in glob.glob("test/*"):
+  label = int(label_dir.replace("test/", ""))
+  for filename in glob.glob(label_dir + "/*.png"):
+    index, score = predict_image(model, filename)
+    if score < SCORE_THRESHOLD:
+      discarded_count += 1
+      continue
+    if index == label:
+      correct_count += 1
+    else:
+      wrong_count += 1
+      print("%d expected, %d found with score %f" % (label, index, score))
+      display(Image(filename=filename))
 
-# correct_percentage = (correct_count / (correct_count + wrong_count)) * 100
-# print("%.1f%% correct (N=%d, %d unknown)" % (correct_percentage, (correct_count + wrong_count), discarded_count))
+correct_percentage = (correct_count / (correct_count + wrong_count)) * 100
+print("%.1f%% correct (N=%d, %d unknown)" % (correct_percentage, (correct_count + wrong_count), discarded_count))
 
-# model.save(SAVED_MODEL_FILENAME)
+model.save(SAVED_MODEL_FILENAME)
 
-# #!curl -L https://storage.googleapis.com/download.tensorflow.org/models/tflite/micro/magic_wand_saved_model_2021_01_02.tgz -o saved_model.tgz
-# #!tar -xzf saved_model.tgz
+#!curl -L https://storage.googleapis.com/download.tensorflow.org/models/tflite/micro/magic_wand_saved_model_2021_01_02.tgz -o saved_model.tgz
+#!tar -xzf saved_model.tgz
 
-# # Fix 2: Load the Keras model from the .keras file
-# loaded_model = tf.keras.models.load_model(SAVED_MODEL_FILENAME)
-# # Fix 3: Convert the model to TensorFlow Lite format using "from_keras_model"
-# converter = tf.lite.TFLiteConverter.from_keras_model(loaded_model)
-# model_no_quant_tflite = converter.convert()
+# Fix 2: Load the Keras model from the .keras file
+loaded_model = tf.keras.models.load_model(SAVED_MODEL_FILENAME)
+# Fix 3: Convert the model to TensorFlow Lite format using "from_keras_model"
+converter = tf.lite.TFLiteConverter.from_keras_model(loaded_model)
+model_no_quant_tflite = converter.convert()
 
-# # Save the model to disk
-# open(FLOAT_TFL_MODEL_FILENAME, "wb").write(model_no_quant_tflite)
+# Save the model to disk
+open(FLOAT_TFL_MODEL_FILENAME, "wb").write(model_no_quant_tflite)
 
 # def representative_dataset():
   # for filename in glob.glob("test/*/*.png"):
