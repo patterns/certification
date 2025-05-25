@@ -272,72 +272,72 @@ validation_ds = image_dataset_from_directory(
     batch_size=32,
     image_size=(IMAGE_WIDTH, IMAGE_HEIGHT)).prefetch(buffer_size=32)
 
-# train_ds = image_dataset_from_directory(
-    # directory='train',
-    # labels='inferred',
-    # label_mode='categorical',
-    # batch_size=32,
-    # image_size=(IMAGE_WIDTH, IMAGE_HEIGHT)).prefetch(buffer_size=32)
+train_ds = image_dataset_from_directory(
+    directory='train',
+    labels='inferred',
+    label_mode='categorical',
+    batch_size=32,
+    image_size=(IMAGE_WIDTH, IMAGE_HEIGHT)).prefetch(buffer_size=32)
 
-# import matplotlib.pyplot as plt
+# This plot causes a rendevouz warning:
+# I tensorflow/core/framework/local_rendezvous.cc:405] Local rendezvous is aborting with status: OUT_OF_RANGE: End of sequence
+# ~ import matplotlib.pyplot as plt
+# ~ plt.figure(figsize=(10, 10))
+# ~ for images, labels in train_ds.take(1):
+  # ~ for i in range(9):
+    # ~ ax = plt.subplot(3, 3, i + 1)
+    # ~ plt.imshow(images[i].numpy().astype("uint8"))
+    # ~ plt.axis("off")
 
-# plt.figure(figsize=(10, 10))
-# for images, labels in train_ds.take(1):
-  # for i in range(9):
-    # ax = plt.subplot(3, 3, i + 1)
-    # plt.imshow(images[i].numpy().astype("uint8"))
-    # plt.axis("off")
+#dep pydot required
+from keras import layers
 
-# from keras import layers
+def make_model(input_shape, num_classes):
+    inputs = keras.Input(shape=input_shape)
 
-# def make_model(input_shape, num_classes):
-    # inputs = keras.Input(shape=input_shape)
+    # Entry block
+    x = layers.Rescaling(1.0 / 255)(inputs)
+    x = layers.Conv2D(16, 3, strides=2, padding="same")(x)
+    x = layers.BatchNormalization()(x)
+    x = layers.Activation("relu")(x)
+    x = layers.Dropout(0.5)(x)
 
-    # # Entry block
-    # x = layers.Rescaling(1.0 / 255)(inputs)
-    # x = layers.Conv2D(16, 3, strides=2, padding="same")(x)
-    # x = layers.BatchNormalization()(x)
-    # x = layers.Activation("relu")(x)
-    # x = layers.Dropout(0.5)(x)
+    x = layers.Conv2D(32, 3, strides=2, padding="same")(x)
+    x = layers.BatchNormalization()(x)
+    x = layers.Activation("relu")(x)
+    x = layers.Dropout(0.5)(x)
 
-    # x = layers.Conv2D(32, 3, strides=2, padding="same")(x)
-    # x = layers.BatchNormalization()(x)
-    # x = layers.Activation("relu")(x)
-    # x = layers.Dropout(0.5)(x)
+    x = layers.Conv2D(64, 3, strides=2, padding="same")(x)
+    x = layers.BatchNormalization()(x)
+    x = layers.Activation("relu")(x)
+    x = layers.Dropout(0.5)(x)
 
-    # x = layers.Conv2D(64, 3, strides=2, padding="same")(x)
-    # x = layers.BatchNormalization()(x)
-    # x = layers.Activation("relu")(x)
-    # x = layers.Dropout(0.5)(x)
+    x = layers.GlobalAveragePooling2D()(x)
+    activation = "softmax"
+    units = num_classes
 
-    # x = layers.GlobalAveragePooling2D()(x)
-    # activation = "softmax"
-    # units = num_classes
+    x = layers.Dropout(0.5)(x)
+    outputs = layers.Dense(units, activation=activation)(x)
+    return keras.Model(inputs, outputs)
 
-    # x = layers.Dropout(0.5)(x)
-    # outputs = layers.Dense(units, activation=activation)(x)
-    # return keras.Model(inputs, outputs)
+model = make_model(input_shape=(IMAGE_WIDTH, IMAGE_HEIGHT, 3), num_classes=10)
+keras.utils.plot_model(model, show_shapes=True)
 
-# model = make_model(input_shape=(IMAGE_WIDTH, IMAGE_HEIGHT, 3), num_classes=10)
-# keras.utils.plot_model(model, show_shapes=True)
+epochs = 30
 
-# epochs = 30
-
-# #<-------- Fix: Keras now expects model files to end with .keras, which is the updated format.
-# #               This ensures the model saves correctly and prevents the ValueError.
-# callbacks = [
-    # keras.callbacks.ModelCheckpoint("checkpoints/save_at_{epoch}.keras"),
-# ]
-
-
-# model.compile(
-    # optimizer=keras.optimizers.Adam(1e-3),
-    # loss="binary_crossentropy",
-    # metrics=["accuracy"],
-# )
-# model.fit(
-    # train_ds, epochs=epochs, callbacks=callbacks, validation_data=validation_ds,
-# )
+#<-------- Fix: Keras now expects model files to end with .keras, which is the updated format.
+#               This ensures the model saves correctly and prevents the ValueError.
+callbacks = [
+    keras.callbacks.ModelCheckpoint("checkpoints/save_at_{epoch}.keras"),
+]
+model.compile(
+    optimizer=keras.optimizers.Adam(1e-3),
+    loss="binary_crossentropy",
+    metrics=["accuracy"],
+)
+model.fit(
+    train_ds, epochs=epochs, callbacks=callbacks, validation_data=validation_ds,
+)
 
 # def predict_image(model, filename):
   # img = keras.preprocessing.image.load_img(filename, target_size=(IMAGE_WIDTH, IMAGE_HEIGHT))
