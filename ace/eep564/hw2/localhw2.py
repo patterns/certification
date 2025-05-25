@@ -68,209 +68,209 @@ def plot_stroke(stroke):
 
 plot_stroke(strokes[11])
 
-# import math
-# import numpy as np
-# import PIL
+import math
+import numpy as np
+import PIL
 
-# FIXED_POINT = 256
+FIXED_POINT = 256
 
-# def mul_fp(a, b):
-  # return (a * b) / FIXED_POINT
+def mul_fp(a, b):
+  return (a * b) / FIXED_POINT
 
-# def div_fp(a, b):
-  # if b == 0:
-    # b = 1
-  # return (a * FIXED_POINT) / b
+def div_fp(a, b):
+  if b == 0:
+    b = 1
+  return (a * FIXED_POINT) / b
 
-# def float_to_fp(a):
-  # return math.floor(a * FIXED_POINT)
+def float_to_fp(a):
+  return math.floor(a * FIXED_POINT)
 
-# def norm_to_coord_fp(a, range_fp, half_size_fp):
-  # a_fp = float_to_fp(a)
-  # norm_fp = div_fp(a_fp, range_fp)
-  # return mul_fp(norm_fp, half_size_fp) + half_size_fp
+def norm_to_coord_fp(a, range_fp, half_size_fp):
+  a_fp = float_to_fp(a)
+  norm_fp = div_fp(a_fp, range_fp)
+  return mul_fp(norm_fp, half_size_fp) + half_size_fp
 
-# def round_fp_to_int(a):
-  # return math.floor((a + (FIXED_POINT / 2)) / FIXED_POINT)
+def round_fp_to_int(a):
+  return math.floor((a + (FIXED_POINT / 2)) / FIXED_POINT)
 
-# def gate(a, min, max):
-  # if a < min:
-    # return min
-  # elif a > max:
-    # return max
-  # else:
-    # return a
+def gate(a, min, max):
+  if a < min:
+    return min
+  elif a > max:
+    return max
+  else:
+    return a
 
-# def rasterize_stroke(stroke_points, x_range, y_range, width, height):
-  # num_channels = 3
-  # buffer_byte_count = height * width * num_channels
-  # buffer = bytearray(buffer_byte_count)
+def rasterize_stroke(stroke_points, x_range, y_range, width, height):
+  num_channels = 3
+  buffer_byte_count = height * width * num_channels
+  buffer = bytearray(buffer_byte_count)
 
-  # width_fp = width * FIXED_POINT
-  # height_fp = height * FIXED_POINT
-  # half_width_fp = width_fp / 2
-  # half_height_fp = height_fp / 2
-  # x_range_fp = float_to_fp(x_range)
-  # y_range_fp = float_to_fp(y_range)
+  width_fp = width * FIXED_POINT
+  height_fp = height * FIXED_POINT
+  half_width_fp = width_fp / 2
+  half_height_fp = height_fp / 2
+  x_range_fp = float_to_fp(x_range)
+  y_range_fp = float_to_fp(y_range)
 
-  # t_inc_fp = FIXED_POINT / len(stroke_points)
+  t_inc_fp = FIXED_POINT / len(stroke_points)
 
-  # one_half_fp = (FIXED_POINT / 2)
+  one_half_fp = (FIXED_POINT / 2)
 
-  # for point_index in range(len(stroke_points) - 1):
-    # start_point = stroke_points[point_index]
-    # end_point = stroke_points[point_index + 1]
-    # start_x_fp = norm_to_coord_fp(start_point["x"], x_range_fp, half_width_fp)
-    # start_y_fp = norm_to_coord_fp(-start_point["y"], y_range_fp, half_height_fp)
-    # end_x_fp = norm_to_coord_fp(end_point["x"], x_range_fp, half_width_fp)
-    # end_y_fp = norm_to_coord_fp(-end_point["y"], y_range_fp, half_height_fp)
-    # delta_x_fp = end_x_fp - start_x_fp
-    # delta_y_fp = end_y_fp - start_y_fp
+  for point_index in range(len(stroke_points) - 1):
+    start_point = stroke_points[point_index]
+    end_point = stroke_points[point_index + 1]
+    start_x_fp = norm_to_coord_fp(start_point["x"], x_range_fp, half_width_fp)
+    start_y_fp = norm_to_coord_fp(-start_point["y"], y_range_fp, half_height_fp)
+    end_x_fp = norm_to_coord_fp(end_point["x"], x_range_fp, half_width_fp)
+    end_y_fp = norm_to_coord_fp(-end_point["y"], y_range_fp, half_height_fp)
+    delta_x_fp = end_x_fp - start_x_fp
+    delta_y_fp = end_y_fp - start_y_fp
 
-    # t_fp = point_index * t_inc_fp
-    # if t_fp < one_half_fp:
-      # local_t_fp = div_fp(t_fp, one_half_fp)
-      # one_minus_t_fp = FIXED_POINT - local_t_fp
-      # red = round_fp_to_int(one_minus_t_fp * 255)
-      # green = round_fp_to_int(local_t_fp * 255)
-      # blue = 0
-    # else:
-      # local_t_fp = div_fp(t_fp - one_half_fp, one_half_fp)
-      # one_minus_t_fp = FIXED_POINT - local_t_fp
-      # red = 0
-      # green = round_fp_to_int(one_minus_t_fp * 255)
-      # blue = round_fp_to_int(local_t_fp * 255)
-    # red = gate(red, 0, 255)
-    # green = gate(green, 0, 255)
-    # blue = gate(blue, 0, 255)
+    t_fp = point_index * t_inc_fp
+    if t_fp < one_half_fp:
+      local_t_fp = div_fp(t_fp, one_half_fp)
+      one_minus_t_fp = FIXED_POINT - local_t_fp
+      red = round_fp_to_int(one_minus_t_fp * 255)
+      green = round_fp_to_int(local_t_fp * 255)
+      blue = 0
+    else:
+      local_t_fp = div_fp(t_fp - one_half_fp, one_half_fp)
+      one_minus_t_fp = FIXED_POINT - local_t_fp
+      red = 0
+      green = round_fp_to_int(one_minus_t_fp * 255)
+      blue = round_fp_to_int(local_t_fp * 255)
+    red = gate(red, 0, 255)
+    green = gate(green, 0, 255)
+    blue = gate(blue, 0, 255)
 
-    # if abs(delta_x_fp) > abs(delta_y_fp):
-      # line_length = abs(round_fp_to_int(delta_x_fp))
-      # if delta_x_fp > 0:
-        # x_inc_fp = 1 * FIXED_POINT
-        # y_inc_fp = div_fp(delta_y_fp, delta_x_fp)
-      # else:
-        # x_inc_fp = -1 * FIXED_POINT
-        # y_inc_fp = -div_fp(delta_y_fp, delta_x_fp)
-    # else:
-      # line_length = abs(round_fp_to_int(delta_y_fp))
-      # if delta_y_fp > 0:
-        # y_inc_fp = 1 * FIXED_POINT
-        # x_inc_fp = div_fp(delta_x_fp, delta_y_fp)
-      # else:
-        # y_inc_fp = -1 * FIXED_POINT
-        # x_inc_fp = -div_fp(delta_x_fp, delta_y_fp)
-    # for i in range(line_length + 1):
-      # x_fp = start_x_fp + (i * x_inc_fp)
-      # y_fp = start_y_fp + (i * y_inc_fp)
-      # x = round_fp_to_int(x_fp)
-      # y = round_fp_to_int(y_fp)
-      # if (x < 0) or (x >= width) or (y < 0) or (y >= height):
-        # continue
-      # buffer_index = (y * width * num_channels) + (x * num_channels)
-      # buffer[buffer_index + 0] = red
-      # buffer[buffer_index + 1] = green
-      # buffer[buffer_index + 2] = blue
+    if abs(delta_x_fp) > abs(delta_y_fp):
+      line_length = abs(round_fp_to_int(delta_x_fp))
+      if delta_x_fp > 0:
+        x_inc_fp = 1 * FIXED_POINT
+        y_inc_fp = div_fp(delta_y_fp, delta_x_fp)
+      else:
+        x_inc_fp = -1 * FIXED_POINT
+        y_inc_fp = -div_fp(delta_y_fp, delta_x_fp)
+    else:
+      line_length = abs(round_fp_to_int(delta_y_fp))
+      if delta_y_fp > 0:
+        y_inc_fp = 1 * FIXED_POINT
+        x_inc_fp = div_fp(delta_x_fp, delta_y_fp)
+      else:
+        y_inc_fp = -1 * FIXED_POINT
+        x_inc_fp = -div_fp(delta_x_fp, delta_y_fp)
+    for i in range(line_length + 1):
+      x_fp = start_x_fp + (i * x_inc_fp)
+      y_fp = start_y_fp + (i * y_inc_fp)
+      x = round_fp_to_int(x_fp)
+      y = round_fp_to_int(y_fp)
+      if (x < 0) or (x >= width) or (y < 0) or (y >= height):
+        continue
+      buffer_index = (y * width * num_channels) + (x * num_channels)
+      buffer[buffer_index + 0] = red
+      buffer[buffer_index + 1] = green
+      buffer[buffer_index + 2] = blue
 
-  # np_buffer = np.frombuffer(buffer, dtype=np.uint8).reshape(height, width, num_channels)
+  np_buffer = np.frombuffer(buffer, dtype=np.uint8).reshape(height, width, num_channels)
 
-  # return np_buffer
+  return np_buffer
 
-# raster = rasterize_stroke(strokes[11]["strokePoints"], 0.5, 0.5, 32, 32)
-# PIL.Image.fromarray(raster).resize((512, 512), PIL.Image.NEAREST)
+raster = rasterize_stroke(strokes[11]["strokePoints"], 0.5, 0.5, 32, 32)
+PIL.Image.fromarray(raster).resize((512, 512), PIL.Image.NEAREST)
 
-# from pathlib import Path
-# import shutil
+from pathlib import Path
+import shutil
 
-# X_RANGE = 0.6
-# Y_RANGE = 0.6
+X_RANGE = 0.6
+Y_RANGE = 0.6
 
-# def ensure_empty_dir(dirname):
-  # dirpath = Path(dirname)
-  # if dirpath.exists() and dirpath.is_dir():
-    # shutil.rmtree(dirpath)
-  # dirpath.mkdir()
+def ensure_empty_dir(dirname):
+  dirpath = Path(dirname)
+  if dirpath.exists() and dirpath.is_dir():
+    shutil.rmtree(dirpath)
+  dirpath.mkdir()
 
-# def augment_points(points, move_range, scale_range, rotate_range):
-  # move_x = np.random.uniform(low=-move_range, high=move_range)
-  # move_y = np.random.uniform(low=-move_range, high=move_range)
-  # scale = np.random.uniform(low=1.0-scale_range, high=1.0+scale_range)
-  # rotate = np.random.uniform(low=-rotate_range, high=rotate_range)
+def augment_points(points, move_range, scale_range, rotate_range):
+  move_x = np.random.uniform(low=-move_range, high=move_range)
+  move_y = np.random.uniform(low=-move_range, high=move_range)
+  scale = np.random.uniform(low=1.0-scale_range, high=1.0+scale_range)
+  rotate = np.random.uniform(low=-rotate_range, high=rotate_range)
 
-  # x_axis_x = math.cos(rotate) * scale
-  # x_axis_y = math.sin(rotate) * scale
+  x_axis_x = math.cos(rotate) * scale
+  x_axis_y = math.sin(rotate) * scale
 
-  # y_axis_x = -math.sin(rotate) * scale
-  # y_axis_y = math.cos(rotate) * scale
+  y_axis_x = -math.sin(rotate) * scale
+  y_axis_y = math.cos(rotate) * scale
 
-  # new_points = []
-  # for point in points:
-    # old_x = point["x"]
-    # old_y = point["y"]
-    # new_x = (x_axis_x * old_x) + (x_axis_y * old_y) + move_x
-    # new_y = (y_axis_x * old_x) + (y_axis_y * old_y) + move_y
-    # new_points.append({"x": new_x, "y": new_y})
+  new_points = []
+  for point in points:
+    old_x = point["x"]
+    old_y = point["y"]
+    new_x = (x_axis_x * old_x) + (x_axis_y * old_y) + move_x
+    new_y = (y_axis_x * old_x) + (y_axis_y * old_y) + move_y
+    new_points.append({"x": new_x, "y": new_y})
 
-  # return new_points
+  return new_points
 
-# def save_strokes_as_images(strokes, root_folder, width, height, augment_count):
-  # ensure_empty_dir(root_folder)
-  # labels = set()
-  # for stroke in strokes:
-    # labels.add(stroke["label"].lower())
-  # for label in labels:
-    # label_path = Path(root_folder, label)
-    # ensure_empty_dir(label_path)
+def save_strokes_as_images(strokes, root_folder, width, height, augment_count):
+  ensure_empty_dir(root_folder)
+  labels = set()
+  for stroke in strokes:
+    labels.add(stroke["label"].lower())
+  for label in labels:
+    label_path = Path(root_folder, label)
+    ensure_empty_dir(label_path)
 
-  # label_counts = {}
-  # for stroke in strokes:
-    # points = stroke["strokePoints"]
-    # label = stroke["label"].lower()
-    # if label == "":
-      # raise Exception("Missing label for %s:%d" % (stroke["filename"], stroke["index"]))
-    # if label not in label_counts:
-      # label_counts[label] = 0
-    # label_count = label_counts[label]
-    # label_counts[label] += 1
-    # raster = rasterize_stroke(points, X_RANGE, Y_RANGE, width, height)
-    # image = PIL.Image.fromarray(raster)
-    # image.save(Path(root_folder, label, str(label_count) + ".png"))
-    # for i in range(augment_count):
-      # augmented_points = augment_points(points, 0.1, 0.1, 0.3)
-      # raster = rasterize_stroke(augmented_points, X_RANGE, Y_RANGE, width, height)
-      # image = PIL.Image.fromarray(raster)
-      # image.save(Path(root_folder, label, str(label_count) + "_a" + str(i) + ".png"))
+  label_counts = {}
+  for stroke in strokes:
+    points = stroke["strokePoints"]
+    label = stroke["label"].lower()
+    if label == "":
+      raise Exception("Missing label for %s:%d" % (stroke["filename"], stroke["index"]))
+    if label not in label_counts:
+      label_counts[label] = 0
+    label_count = label_counts[label]
+    label_counts[label] += 1
+    raster = rasterize_stroke(points, X_RANGE, Y_RANGE, width, height)
+    image = PIL.Image.fromarray(raster)
+    image.save(Path(root_folder, label, str(label_count) + ".png"))
+    for i in range(augment_count):
+      augmented_points = augment_points(points, 0.1, 0.1, 0.3)
+      raster = rasterize_stroke(augmented_points, X_RANGE, Y_RANGE, width, height)
+      image = PIL.Image.fromarray(raster)
+      image.save(Path(root_folder, label, str(label_count) + "_a" + str(i) + ".png"))
 
-# IMAGE_WIDTH = 32
-# IMAGE_HEIGHT = 32
+IMAGE_WIDTH = 32
+IMAGE_HEIGHT = 32
 
-# shuffled_strokes = strokes
-# np.random.shuffle(shuffled_strokes)
+shuffled_strokes = strokes
+np.random.shuffle(shuffled_strokes)
 
-# test_percentage = 10
-# validation_percentage = 10
-# train_percentage = 100 - (test_percentage + validation_percentage)
+test_percentage = 10
+validation_percentage = 10
+train_percentage = 100 - (test_percentage + validation_percentage)
 
-# test_count = math.floor((len(shuffled_strokes) * test_percentage) / 100)
-# validation_count = math.floor((len(shuffled_strokes) * validation_percentage) / 100)
-# test_strokes = shuffled_strokes[0:test_count]
-# validation_strokes = shuffled_strokes[test_count:(test_count + validation_count)]
-# train_strokes = shuffled_strokes[(test_count + validation_count):]
+test_count = math.floor((len(shuffled_strokes) * test_percentage) / 100)
+validation_count = math.floor((len(shuffled_strokes) * validation_percentage) / 100)
+test_strokes = shuffled_strokes[0:test_count]
+validation_strokes = shuffled_strokes[test_count:(test_count + validation_count)]
+train_strokes = shuffled_strokes[(test_count + validation_count):]
 
-# save_strokes_as_images(test_strokes, "test", IMAGE_WIDTH, IMAGE_HEIGHT, 10)
-# save_strokes_as_images(validation_strokes, "validation", IMAGE_WIDTH, IMAGE_HEIGHT, 0)
-# save_strokes_as_images(train_strokes, "train", IMAGE_WIDTH, IMAGE_HEIGHT, 10)
+save_strokes_as_images(test_strokes, "test", IMAGE_WIDTH, IMAGE_HEIGHT, 10)
+save_strokes_as_images(validation_strokes, "validation", IMAGE_WIDTH, IMAGE_HEIGHT, 0)
+save_strokes_as_images(train_strokes, "train", IMAGE_WIDTH, IMAGE_HEIGHT, 10)
 
-# import tensorflow as tf
-# from tensorflow import keras
-# from tensorflow.keras.utils import image_dataset_from_directory
+import tensorflow as tf
+from tensorflow import keras
+from tensorflow.keras.utils import image_dataset_from_directory
 
-# validation_ds = image_dataset_from_directory(
-    # directory='validation',
-    # labels='inferred',
-    # label_mode='categorical',
-    # batch_size=32,
-    # image_size=(IMAGE_WIDTH, IMAGE_HEIGHT)).prefetch(buffer_size=32)
+validation_ds = image_dataset_from_directory(
+    directory='validation',
+    labels='inferred',
+    label_mode='categorical',
+    batch_size=32,
+    image_size=(IMAGE_WIDTH, IMAGE_HEIGHT)).prefetch(buffer_size=32)
 
 # train_ds = image_dataset_from_directory(
     # directory='train',
