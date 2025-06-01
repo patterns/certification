@@ -22,6 +22,7 @@ async function onStartButtonClick() {
     const device = await navigator.bluetooth.requestDevice({
         filters: [{services: [serviceUuid]}]});
 
+    device.addEventListener('gattserverdisconnected', onDisconnected);
     log('Connecting to GATT Server...');
     const server = await device.gatt.connect();
 
@@ -57,6 +58,9 @@ async function onStopButtonClick() {
 function handleNotifications(event) {
   let value = event.target.value;
   let a = [];
+
+  if (value.getUint8(0) >0) { newAlarm(); }
+
   // Convert raw data bytes to hex values just for the sake of showing something.
   // In the "real" world, you'd use data.getUint8, data.getUint16 or even
   // TextDecoder to process raw data bytes.
@@ -65,7 +69,37 @@ function handleNotifications(event) {
   }
   log('> ' + a.join(' '));
 }
+function newAlarm() {
+    const $parent = document.querySelector('#msgcontain');
 
+    const $entry = document.createElement('div');
+    $entry.setAttribute('class', 'notification is-danger');
+    $entry.innerHTML = '<button class="delete"></button>Alarm received!';
+    const $refbase = $parent.querySelector('.message, .notification');
+    $parent.insertBefore($entry, $refbase);
+    const $delete = $parent.querySelector('.notification .delete');
+    const $notify = $delete.parentNode;
+    $delete.addEventListener('click', () => {
+        $notify.parentNode.removeChild($notify);
+    });
+
+/*
+    const $entry = document.createElement('article');
+    $entry.setAttribute('class', 'message');
+    $entry.innerHTML = '<div class="message-header"><p>Alarm</p><button class="delete" aria-label="delete"></button></div><div class="message-body">Alarm received!</div>';
+    const $refbase = document.querySelector('#msgbase');
+    $parent.insertBefore($entry, $refbase);
+    //delete handler
+    const $delete = $parent.querySelector('article div .delete');
+    const $article = $delete.parentNode.parentNode;
+    $delete.addEventListener('click', () => {
+        $article.parentNode.removeChild($article);
+    });*/
+}
+function onDisconnected(event) {
+    const device = event.target;
+    log(`Device ${device.name} is disconnected.`);
+}
 function log(txt) {
     const textarea = document.querySelector('#logbox');
     textarea.value += txt;
@@ -100,7 +134,7 @@ document.addEventListener('DOMContentLoaded', () => {
         <button id="startsub" class="button is-primary is-large">Subscribe</button>
         </div>
         <div class="control">
-        <button id="stopsub" class="button is-large" disabled >Stop</button>
+        <button id="stopsub" class="button is-large" disabled>Stop</button>
         </div>
     </div>
     <fieldset disabled>
@@ -119,16 +153,11 @@ document.addEventListener('DOMContentLoaded', () => {
     </fieldset>
 </section>
 <section class="section">
-    <div class="container">
-        <article class="message">
+    <div id="msgcontain" class="container">
+        <article id="msgbase" class="message">
             <div class="message-header"><p>EEP564 - Nano BLE</p><button class="delete" aria-label="delete"></button></div>
             <div class="message-body">Demo of Nano as peripheral connected to Web Bluetooth in central role.</div>
         </article>
-
-        <div class="notification">
-            <button class="delete"></button>
-            Lorem ipsum
-        </div>
     </div>
 </section>
 <section class="section">
@@ -139,32 +168,5 @@ document.addEventListener('DOMContentLoaded', () => {
 
 <!--
 ////////
-navigator.bluetooth.requestDevice({
-  filters: [{
-    services: ['19b10000-e8f2-537e-4f6c-d104768a1214']
-  }]
-})
-.then(device => {
-    device.addEventListener('gattserverdisconnected', onDisconnected);
-    return device.gatt.connect();
-    })
-.then(server => server.getPrimaryService('19b10000-e8f2-537e-4f6c-d104768a1214'))
-.then(service => service.getCharacteristic('19b10001-e8f2-537e-4f6c-d104768a1214'))
-/*******
-.then(characteristic => characteristic.startNotifications())
-.then(characteristic => {
-    characteristic.addEventListener('characteristicvaluechanged', handleCharacteristicValueChanged);
-    console.log('Notifications started.');
-})*****/
-.catch(error => { console.error(error); });
 
-function handleCharacteristicValueChanged(event) {
-    const value = event.target.value;
-    console.log('Received ' + value);
-
-}
-function onDisconnected(event) {
-    const device = event.target;
-    console.log(`Device ${device.name} is disconnected.`);
-}
 -->
