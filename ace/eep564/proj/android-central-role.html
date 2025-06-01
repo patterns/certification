@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html>
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>EEP564 - Nano BLE</title>
+<link rel="stylesheet" type="text/css" href="bulma.min.css">
+<script>
+var myCharacteristic;
+
+async function onStartButtonClick() {
+  let serviceUuid = document.querySelector('#service').value;
+  if (serviceUuid.startsWith('0x')) {
+    serviceUuid = parseInt(serviceUuid);
+  }
+
+  let characteristicUuid = document.querySelector('#characteristic').value;
+  if (characteristicUuid.startsWith('0x')) {
+    characteristicUuid = parseInt(characteristicUuid);
+  }
+
+  try {
+    log('Requesting Bluetooth Device...');
+    const device = await navigator.bluetooth.requestDevice({
+        filters: [{services: [serviceUuid]}]});
+
+    log('Connecting to GATT Server...');
+    const server = await device.gatt.connect();
+
+    log('Getting Service...');
+    const service = await server.getPrimaryService(serviceUuid);
+
+    log('Getting Characteristic...');
+    myCharacteristic = await service.getCharacteristic(characteristicUuid);
+
+    await myCharacteristic.startNotifications();
+
+    log('> Notifications started');
+    myCharacteristic.addEventListener('characteristicvaluechanged',
+        handleNotifications);
+  } catch(error) {
+    log('Argh! ' + error);
+  }
+}
+
+async function onStopButtonClick() {
+  if (myCharacteristic) {
+    try {
+      await myCharacteristic.stopNotifications();
+      log('> Notifications stopped');
+      myCharacteristic.removeEventListener('characteristicvaluechanged',
+          handleNotifications);
+    } catch(error) {
+      log('Argh! ' + error);
+    }
+  }
+}
+
+function handleNotifications(event) {
+  let value = event.target.value;
+  let a = [];
+  // Convert raw data bytes to hex values just for the sake of showing something.
+  // In the "real" world, you'd use data.getUint8, data.getUint16 or even
+  // TextDecoder to process raw data bytes.
+  for (let i = 0; i < value.byteLength; i++) {
+    a.push('0x' + ('00' + value.getUint8(i).toString(16)).slice(-2));
+  }
+  log('> ' + a.join(' '));
+}
+
+function log(txt) {
+    const textarea = document.querySelector('#logbox');
+    textarea.value += txt;
+}
+document.addEventListener('DOMContentLoaded', () => {
+    // event handler for the x to close the notification
+    (document.querySelectorAll('.notification .delete') || []).forEach(($delete) => {
+        const $notification = $delete.parentNode;
+        $delete.addEventListener('click', () => {
+            $notification.parentNode.removeChild($notification);
+        });
+    });
+    const startButton = document.querySelector('#startsub');
+    const stopButton = document.querySelector('#stopsub');
+    startButton.addEventListener('click', () => {
+        startButton.disabled = true;
+        onStartButtonClick();
+        stopButton.disabled = false;
+    });
+    stopButton.addEventListener('click', () => {
+        stopButton.disabled = true;
+        return onStopButtonClick();
+        startButton.disabled = false;
+    });
+});
+</script>
+</head>
+<body>
+<section class="section">
+    <div class="field is-grouped">
+        <div class="control">
+        <button id="startsub" class="button is-primary is-large">Subscribe</button>
+        </div>
+        <div class="control">
+        <button id="stopsub" class="button is-large" disabled >Stop</button>
+        </div>
+    </div>
+    <fieldset disabled>
+        <div class="field">
+            <label class="label">Service UUID</label>
+            <div class="control">
+                <input id="service" class="input" type="text" value="19b10000-e8f2-537e-4f6c-d104768a1214"></input>
+            </div>
+        </div>
+        <div class="field">
+            <label class="label">Characteristic UUID</label>
+            <div class="control">
+                <input id="characteristic" class="input" type="text" value="19b10001-e8f2-537e-4f6c-d104768a1214"></input>
+            </div>
+        </div>
+    </fieldset>
+</section>
+<section class="section">
+    <div class="container">
+        <article class="message">
+            <div class="message-header"><p>EEP564 - Nano BLE</p><button class="delete" aria-label="delete"></button></div>
+            <div class="message-body">Demo of Nano as peripheral connected to Web Bluetooth in central role.</div>
+        </article>
+
+        <div class="notification">
+            <button class="delete"></button>
+            Lorem ipsum
+        </div>
+    </div>
+</section>
+<section class="section">
+    <textarea id="logbox" class="textarea is-info" rows="10"></textarea>
+</section>
+</body>
+</html>
+
+<!--
+////////
+navigator.bluetooth.requestDevice({
+  filters: [{
+    services: ['19b10000-e8f2-537e-4f6c-d104768a1214']
+  }]
+})
+.then(device => {
+    device.addEventListener('gattserverdisconnected', onDisconnected);
+    return device.gatt.connect();
+    })
+.then(server => server.getPrimaryService('19b10000-e8f2-537e-4f6c-d104768a1214'))
+.then(service => service.getCharacteristic('19b10001-e8f2-537e-4f6c-d104768a1214'))
+/*******
+.then(characteristic => characteristic.startNotifications())
+.then(characteristic => {
+    characteristic.addEventListener('characteristicvaluechanged', handleCharacteristicValueChanged);
+    console.log('Notifications started.');
+})*****/
+.catch(error => { console.error(error); });
+
+function handleCharacteristicValueChanged(event) {
+    const value = event.target.value;
+    console.log('Received ' + value);
+
+}
+function onDisconnected(event) {
+    const device = event.target;
+    console.log(`Device ${device.name} is disconnected.`);
+}
+-->
