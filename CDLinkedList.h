@@ -11,11 +11,13 @@ const int NODE_HEAD = -99;
 const int NODE_UNDEFINED = -100;
 const int ERROR_INDEX = -101;
 
-// A node that will have two pointers, prev, and next
-struct DListNode {  // a list node
-   int item;
-   DListNode *prev;
-   DListNode *next;
+// nodes are linked together to make the list. The previous and next pointers
+// are the reason the list is double linked.
+struct DListNode {
+   int item_;
+   DListNode *prev_;
+   DListNode *next_;
+   void initialize(int elem, DListNode *prev, DListNode *next);
 };
 
 //---------------------------------------------------------------------------
@@ -43,7 +45,9 @@ public:
 
 protected:
    DListNode *header_;  // a dummy header
-   int traverseCount_ = 0;
+   int traverseCount_;
+   int length_;
+   DListNode *indexToPointer_[LIST_CAPACITY];
 };
 
 #endif

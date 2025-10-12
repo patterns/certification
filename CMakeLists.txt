@@ -20,3 +20,8 @@ target_include_directories(cdll
 enable_testing()
 add_subdirectory(tests)
 
+# enable 'make clang-tidy-check'
+set(sources ${CMAKE_SOURCE_DIR}/CDLinkedList.cpp ${CMAKE_SOURCE_DIR}/CDLinkedList.h)
+add_custom_target(clang-tidy-check clang-tidy -p ${CMAKE_BINARY_DIR}/compile_commands.json -checks=cert* ${sources} DEPENDS ${sources})
+add_custom_target(check DEPENDS clang-tidy-check)
+
