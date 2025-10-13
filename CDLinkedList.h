@@ -4,8 +4,6 @@
 #ifndef CDLINKEDLIST_H
 #define CDLINKEDLIST_H
 
-////#include <string>
-
 const int LIST_CAPACITY = (1024 - 1);
 const int NODE_HEAD = -99;
 const int NODE_UNDEFINED = -100;
@@ -37,17 +35,18 @@ public:
    bool add(int newEntry);
    bool remove(int anEntry);
    void clear();
-
    virtual bool contains(int anEntry);
    int getTraverseCount() const;
-   int retrieve(const int index) const;
+   int retrieve(const int index);
    void resetTraverseCount();
 
 protected:
    DListNode *header_;  // a dummy header
    int traverseCount_;
    int length_;
-   DListNode *indexToPointer_[LIST_CAPACITY];
+
+   DListNode *tailNode();
+   void deleteNode(DListNode *);
 };
 
 #endif
