@@ -19,9 +19,59 @@ CDLinkedList::~CDLinkedList() {
    delete header_;
 }
 
-// ctor initialized with values from parameter list
-CDLinkedList::CDLinkedList(const CDLinkedList &rhs) {
-   // TODO
+// List copy-constructor (implement pass and return by value)
+CDLinkedList::CDLinkedList(const CDLinkedList &cdl) {
+   // TODO where is the segfault? header prev/next?
+
+   // make the head copy
+   DListNode *dummy = new DListNode;
+   dummy->initialize(NODE_HEAD, nullptr, nullptr);
+   header_ = dummy;
+   length_ = cdl.length_;
+   traverseCount_ = cdl.traverseCount_;
+
+   switch (cdl.length_) {
+      case 0: {  // empty list
+         break;
+      }
+      case 1: {  // single node
+         DListNode *tail = cdl.header_->prev_;
+         DListNode *newNode = new DListNode;
+         newNode->item_ = tail->item_;
+         newNode->next_ = header_;
+         newNode->prev_ = header_;
+         header_->next_ = newNode;
+         header_->prev_ = newNode;
+         break;
+      }
+      default: {
+         DListNode *bookmark;
+         // make the node copies starting with tail (reverse)
+         DListNode *visit = cdl.header_->prev_;
+         DListNode *newNode = new DListNode;
+
+         newNode->item_ = visit->item_;                     // copy tail
+         newNode->next_ = header_;                          // link tail to head
+         newNode->prev_ = nullptr;                          // placeholder for parent to tail
+         header_->prev_ = newNode;                          // link head to tail
+
+         bookmark = newNode;                                // bookmark the child
+         visit = visit->prev_;
+
+         // non-tail nodes
+         for (int i = 1; i < cdl.length_; i++) {
+            newNode = new DListNode;
+            bookmark->prev_ = newNode;                      // link child to new parent
+            newNode->item_ = visit->item_;                  // copy item
+            newNode->next_ = bookmark;                      // link parent to child
+            newNode->prev_ = nullptr;                       // placeholder (for new node)
+            bookmark = newNode;                             // bookmark the child
+            visit = visit->prev_;                           // decrement cursor
+         }
+
+         header_->next_ = newNode;                          // link head to zero node
+      }
+   }
 }
 
 // List length
@@ -36,30 +86,37 @@ bool CDLinkedList::add(int elem) {
       // don't allow negative numbers
       return false;
    }
+   /* allow duplicates?
    if (contains(elem)) {
       // don't allow duplicate numbers
       return false;
-   }
+   }*/
 
    DListNode *newNode = new DListNode;
 
-   if (length_ == 0) {  // the empty list
-      // the head node's next/prev began as nullptr,
-      // and new node's prev will point to the head
-      newNode->initialize(elem, header_, header_);
-      header_->next_ = newNode;
-      header_->prev_ = newNode;
-   } else if (length_ == 1) {  // one node list
-      DListNode *n0 = header_->next_;
-      newNode->initialize(elem, n0, header_);
-      n0->next_ = newNode;
-      header_->prev_ = newNode;
-   } else {
-      // we add new node by attaching to the tail
-      DListNode *tn = tailNode();
-      newNode->initialize(elem, tn, header_);
-      tn->next_ = newNode;
-      header_->prev_ = newNode;
+   switch (length_) {
+      case 0: {  // the empty list
+         // the head node's next/prev began as nullptr,
+         // and new node's prev will point to the head
+         newNode->initialize(elem, header_, header_);
+         header_->next_ = newNode;
+         header_->prev_ = newNode;
+         break;
+      }
+      case 1: {  // single node list
+         DListNode *n0 = header_->next_;
+         newNode->initialize(elem, n0, header_);
+         n0->next_ = newNode;
+         header_->prev_ = newNode;
+         break;
+      }
+      default: {
+         // we add the new node by attaching to the tail
+         DListNode *tn = tailNode();
+         newNode->initialize(elem, tn, header_);
+         tn->next_ = newNode;
+         header_->prev_ = newNode;
+      }
    }
 
    length_++;
@@ -69,7 +126,7 @@ bool CDLinkedList::add(int elem) {
 
 // node deletion
 // accepts the element to search for removal as paramter.
-// assume no duplicate list elements.
+// for duplicates, we only remove the first match (not every match).
 bool CDLinkedList::remove(int elem) {
    if (isEmpty() || elem < 0) {
       return false;
@@ -104,14 +161,19 @@ bool CDLinkedList::remove(int elem) {
 // List reset
 // we avoid traversal by using the tail pointer
 void CDLinkedList::clear() {
-   if (length_ == 0) {
-      return;
-   } else if (length_ == 1) {
-      deleteNode(header_->next_);
-   } else {
-      for (int i = length_; i > 0; i--) {
-         DListNode *tn = tailNode();
-         deleteNode(tn);
+   switch (length_) {
+      case 0: {
+         return;
+      }
+      case 1: {
+         deleteNode(header_->next_);
+         break;
+      }
+      default: {
+         for (int i = length_; i > 0; i--) {
+            DListNode *tn = tailNode();
+            deleteNode(tn);
+         }
       }
    }
 
@@ -165,7 +227,7 @@ int CDLinkedList::retrieve(const int index) {
    while (visit->item_ != NODE_HEAD) {
       // access element
       if (index == total) {
-         // found node at index
+         // arrived at the node for specified index
          break;
       }
       visit = visit->next_;
@@ -197,18 +259,23 @@ DListNode *CDLinkedList::tailNode() { return header_->prev_; }
 // for use by the clear() method.
 // accepts the pointer to the target node as parameter.
 void CDLinkedList::deleteNode(DListNode *node) {
-   if (length_ == 0) {
-      // empty list, unreachable?
-      return;
-   } else if (length_ == 1) {
-      // single node list
-      header_->next_ = nullptr;
-      header_->prev_ = nullptr;
-   } else {
-      // first detach (make into orphan)
-      DListNode *parent = node->prev_;
-      node->next_->prev_ = parent;
-      parent->next_ = node->next_;
+   switch (length_) {
+      case 0: {
+         // empty list, unreachable?
+         return;
+      }
+      case 1: {
+         // single node list
+         header_->next_ = nullptr;
+         header_->prev_ = nullptr;
+         break;
+      }
+      default: {
+         // first detach (make into orphan)
+         DListNode *parent = node->prev_;
+         node->next_->prev_ = parent;
+         parent->next_ = node->next_;
+      }
    }
 
    node->next_ = nullptr;
