@@ -1,25 +1,25 @@
-// mtflist.h; Hsin-ih Tu; 2025.10.13;
-// Move to Front list
+// transposelist.h; Hsin-ih Tu; 2025.10.13;
+// Transpose list
 
 #include "CDLinkedList.h"
 
-#ifndef MTFLIST_H
-#define MTFLIST_H
+#ifndef TRANSPOSELIST_H
+#define TRANSPOSELIST_H
 
 //---------------------------------------------------------------------------
-// MtfList:  .
+// TransposeList:  .
 //
 //
 //
 // Implementation and assumptions:
 //   -- To
 
-class MtfList : public CDLinkedList {
+class TransposeList : public CDLinkedList {
 public:
    virtual bool contains(int anEntry);
 
 protected:
-   int elementIndexMtf(int);
+   int elementIndexTranspose(int);
 };
 
 #endif

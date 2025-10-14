@@ -16,6 +16,8 @@ struct DListNode {
    DListNode *prev_;
    DListNode *next_;
    void initialize(int elem, DListNode *prev, DListNode *next);
+   DListNode *child();
+   DListNode *parent();
 };
 
 //---------------------------------------------------------------------------
@@ -51,8 +53,12 @@ protected:
    int traverseCount_;
    int length_;
    DListNode *tailNode();
+   DListNode *zeroNode();
    void deleteNode(DListNode *);
    int elementIndex(int);
+   void traversePlus(int);
+   bool isHeadNode(DListNode *) const;
+   bool elementMatch(DListNode *, int) const;
 };
 
 #endif

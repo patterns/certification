@@ -1,10 +1,10 @@
 #include <gtest/gtest.h>
 
-#include "mtflist.h"
+#include "transposelist.h"
 
-// Mtf behavior
-TEST(MtfTest, empty_list) {
-   MtfList ls = MtfList();
+// Transpose behavior
+TEST(TransposeTest, empty_list) {
+   TransposeList ls = TransposeList();
 
    // empty list
    EXPECT_EQ(ls.isEmpty(), true);
@@ -16,8 +16,8 @@ TEST(MtfTest, empty_list) {
    EXPECT_EQ(ls.getTraverseCount(), 0);
 }
 
-TEST(MtfTest, node_creation) {
-   MtfList ls = MtfList();
+TEST(TransposeTest, node_creation) {
+   TransposeList ls = TransposeList();
    bool added = ls.add(55);
 
    EXPECT_EQ(added, true);
@@ -47,8 +47,8 @@ TEST(MtfTest, node_creation) {
    EXPECT_EQ(added, false);
 }
 
-TEST(MtfTest, list_reset) {
-   MtfList ls = MtfList();
+TEST(TransposeTest, list_reset) {
+   TransposeList ls = TransposeList();
    bool added = ls.add(55);
 
    EXPECT_EQ(added, true);
@@ -58,8 +58,8 @@ TEST(MtfTest, list_reset) {
    EXPECT_EQ(ls.isEmpty(), true);
 }
 
-TEST(MtfTest, node_deletion) {
-   MtfList ls = MtfList();
+TEST(TransposeTest, node_deletion) {
+   TransposeList ls = TransposeList();
 
    bool added = ls.add(55);
 
@@ -91,8 +91,8 @@ TEST(MtfTest, node_deletion) {
    EXPECT_EQ(ls.contains(11), false);
 }
 
-TEST(MtfTest, node_membership) {
-   MtfList ls = MtfList();
+TEST(TransposeTest, node_membership) {
+   TransposeList ls = TransposeList();
    bool added = ls.add(55);
    added = ls.add(77);
    added = ls.add(88);
@@ -111,8 +111,8 @@ TEST(MtfTest, node_membership) {
    EXPECT_EQ(match, true);
 }
 
-TEST(MtfTest, node_creation_moves_to_front) {
-   MtfList ls = MtfList();
+TEST(TransposeTest, node_creation_swap) {
+   TransposeList ls = TransposeList();
    bool added = ls.add(55);
    added = ls.add(77);
    added = ls.add(88);
@@ -126,11 +126,12 @@ TEST(MtfTest, node_creation_moves_to_front) {
    added = ls.add(22);
    EXPECT_EQ(added, true);
    EXPECT_EQ(ls.getCurrentSize(), 5);
-   EXPECT_EQ(ls.retrieve(0), 22);
+   EXPECT_EQ(ls.retrieve(2), 22);
+   EXPECT_EQ(ls.retrieve(3), 88);
 }
 
-TEST(MtfTest, node_membership_moves_to_front) {
-   MtfList ls = MtfList();
+TEST(MtfTest, node_membership_swap) {
+   TransposeList ls = TransposeList();
    bool added = ls.add(55);
    added = ls.add(77);
    added = ls.add(88);
@@ -143,6 +144,7 @@ TEST(MtfTest, node_membership_moves_to_front) {
 
    bool match = ls.contains(22);
    EXPECT_EQ(match, true);
-   EXPECT_EQ(ls.retrieve(0), 22);
+   EXPECT_EQ(ls.retrieve(2), 22);
+   EXPECT_EQ(ls.retrieve(3), 88);
 }
 
