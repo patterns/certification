@@ -21,17 +21,15 @@ struct DListNode {
 //---------------------------------------------------------------------------
 // CDLinkedList:  circular double linked list composed of 'DListNode' nodes.
 //    In order to measure search performance, we track traversal totals.
-//    Example list, 1->8->7->5->1.
+//    Example list, 1->8->7->5.
 //
 // Implementation and assumptions:
 //   -- To designate error conditions, we reserve negative numbers.
 //   -- Which means the valid numerical range for node items are 0 to MAX_INTEGER.
-//   -- The node items are allowed to be duplicates.
+//   -- The add operation ignores duplicates.
 //   -- The beginning of the list is marked by the 'header_' attribute.
 //   -- header_ is a pointer to a dummy 'DListNode' with the tail node
 //      linked by the previous pointer.
-//   -- QUESTION, do we need the traversal count to accumulate across list copies;
-//      similar to the way the TIC copy-constructor explains the object counter?
 
 class CDLinkedList {
 public:
@@ -54,6 +52,7 @@ protected:
    int length_;
    DListNode *tailNode();
    void deleteNode(DListNode *);
+   int elementIndex(int);
 };
 
 #endif

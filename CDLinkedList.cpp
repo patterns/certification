@@ -19,10 +19,9 @@ CDLinkedList::~CDLinkedList() {
    delete header_;
 }
 
-// List copy-constructor (implement pass and return by value)
+// List copy-constructor
+// (implement pass and return by value)
 CDLinkedList::CDLinkedList(const CDLinkedList &cdl) {
-   // TODO where is the segfault? header prev/next?
-
    // make the head copy
    DListNode *dummy = new DListNode;
    dummy->initialize(NODE_HEAD, nullptr, nullptr);
@@ -37,15 +36,16 @@ CDLinkedList::CDLinkedList(const CDLinkedList &cdl) {
       case 1: {  // single node
          DListNode *tail = cdl.header_->prev_;
          DListNode *newNode = new DListNode;
-         newNode->item_ = tail->item_;
-         newNode->next_ = header_;
-         newNode->prev_ = header_;
-         header_->next_ = newNode;
-         header_->prev_ = newNode;
+         newNode->item_ = tail->item_;                      // copy item
+         newNode->next_ = header_;                          // circular link from tail
+         newNode->prev_ = header_;                          // link child to head
+         header_->next_ = newNode;                          // link head to child
+         header_->prev_ = newNode;                          // circular link to tail
          break;
       }
       default: {
          DListNode *bookmark;
+
          // make the node copies starting with tail (reverse)
          DListNode *visit = cdl.header_->prev_;
          DListNode *newNode = new DListNode;
@@ -56,7 +56,7 @@ CDLinkedList::CDLinkedList(const CDLinkedList &cdl) {
          header_->prev_ = newNode;                          // link head to tail
 
          bookmark = newNode;                                // bookmark the child
-         visit = visit->prev_;
+         visit = visit->prev_;                              // position cursor to the parent of tail
 
          // non-tail nodes
          for (int i = 1; i < cdl.length_; i++) {
@@ -69,6 +69,7 @@ CDLinkedList::CDLinkedList(const CDLinkedList &cdl) {
             visit = visit->prev_;                           // decrement cursor
          }
 
+         bookmark->prev_ = header_;                         // link zero node to head
          header_->next_ = newNode;                          // link head to zero node
       }
    }
@@ -80,17 +81,16 @@ int CDLinkedList::getCurrentSize() const { return length_; }
 // List empty identity
 bool CDLinkedList::isEmpty() const { return (length_ == 0); }
 
-// node creation
+// node creation (TODO requirement states "add to front")
+// internal call to contains() because it will be overridden
 bool CDLinkedList::add(int elem) {
    if (elem < 0) {
-      // don't allow negative numbers
-      return false;
+      return false;                                         // forbid negative values
    }
-   /* allow duplicates?
+
    if (contains(elem)) {
-      // don't allow duplicate numbers
-      return false;
-   }*/
+      return true;                                          // duplicates are ignored according to requirement
+   }
 
    DListNode *newNode = new DListNode;
 
@@ -125,37 +125,25 @@ bool CDLinkedList::add(int elem) {
 }
 
 // node deletion
-// accepts the element to search for removal as paramter.
+// accepts the element to search for removal as parameter.
 // for duplicates, we only remove the first match (not every match).
 bool CDLinkedList::remove(int elem) {
-   if (isEmpty() || elem < 0) {
+   int index = elementIndex(elem);
+   if (index == NODE_UNDEFINED) {
       return false;
    }
 
    int total = 0;
-   DListNode *visit = header_->next_;
+   DListNode *visit = header_->next_;                       // position cursor to zero node
 
-   while (visit->item_ != NODE_HEAD) {
-      // access element
-      if (visit->item_ == elem) {
-         // found a matching element
-         break;
-      }
-      visit = visit->next_;
-      // track traversal/visits
-      total++;
+   for (int i = 0; i < index; i++) {
+      visit = visit->next_;                                 // position cursor to child node
+      total++;                                              // track traversal/visits
    }
 
-   // store traversals
-   traverseCount_ += total;
-
-   if (visit->item_ == elem) {
-      deleteNode(visit);
-      length_--;
-      return true;
-   }
-
-   return false;
+   deleteNode(visit);                                       // release node resources
+   length_--;                                               // sync list length
+   return true;
 }
 
 // List reset
@@ -185,58 +173,64 @@ void CDLinkedList::clear() {
 
 // node membership
 bool CDLinkedList::contains(int elem) {
-   if (isEmpty() || elem < 0) {
+   int index = elementIndex(elem);
+   if (index == NODE_UNDEFINED) {
       return false;
    }
 
+   return true;
+}
+
+// find the node index of the element specified
+// since locating the node by element is repeated, this may be reused.
+int CDLinkedList::elementIndex(int elem) {
+   if (isEmpty() || elem < 0) {
+      return NODE_UNDEFINED;
+   }
+   int index = 0;
    int total = 0;
-   DListNode *visit = header_->next_;
+   DListNode *visit = header_->next_;                       // position cursor to zero node
 
    while (visit->item_ != NODE_HEAD) {
-      visit = visit->next_;
-      // track traversal/visits
-      total++;
-      // access element
       if (visit->item_ == elem) {
-         // found a matching element
-         break;
+         break;                                             // found a matching element
       }
+      visit = visit->next_;                                 // position cursor to child node
+      total++;                                              // track traversal/visits
+      index++;                                              // increment node index
    }
 
-   // store traversals
-   traverseCount_ += total;
+   traverseCount_ += total;                                 // store traversals
 
    if (visit->item_ == NODE_HEAD) {
       // we looped through whole list, but no match
-      return false;
+      return NODE_UNDEFINED;
    }
-   return true;
+
+   return index;
 }
 
 // List index access
 // since calling contains() incurs traversals, should we just loop through
-// because it would be twice the work?
 int CDLinkedList::retrieve(const int index) {
    if (isEmpty() || index < 0 || index > length_) {
       return ERROR_INDEX;
    }
 
    int total = 0;
-   DListNode *visit = header_->next_;
+   DListNode *visit = header_->next_;                       // position cursor to zero node
 
    while (visit->item_ != NODE_HEAD) {
-      // access element
       if (index == total) {
          // arrived at the node for specified index
          break;
       }
-      visit = visit->next_;
-      // track traversal/visits
-      total++;
+
+      visit = visit->next_;                                 // position cursor to child node
+      total++;                                              // track traversal/visits
    }
 
-   // store traversals
-   traverseCount_ = traverseCount_ + total;
+   traverseCount_ += total;                                 // store traversals
 
    if (visit->item_ == NODE_HEAD) {
       // we looped through whole list, but no match

@@ -9,8 +9,10 @@ add_library(cdll)
 target_sources(cdll
    PRIVATE
       CDLinkedList.cpp
+      mtflist.cpp
    PUBLIC
       CDLinkedList.h
+      mtflist.h
 )
 target_include_directories(cdll
    PUBLIC
