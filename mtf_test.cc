@@ -29,22 +29,23 @@ TEST(MtfTest, node_creation) {
 
    EXPECT_EQ(added, true);
    EXPECT_EQ(ls.getCurrentSize(), 2);
-   ////EXPECT_EQ(ls.retrieve(1), 77);
-   EXPECT_EQ(ls.retrieve(100), ERROR_INDEX);
+   EXPECT_EQ(ls.retrieve(0), 77);
 
    added = ls.add(22);
    EXPECT_EQ(added, true);
    EXPECT_EQ(ls.getCurrentSize(), 3);
-   ////EXPECT_EQ(ls.retrieve(2), 22);
+   EXPECT_EQ(ls.retrieve(0), 22);
 
    // duplicates are ignored
    added = ls.add(77);
    EXPECT_EQ(added, true);
    EXPECT_EQ(ls.getCurrentSize(), 3);
+   EXPECT_EQ(ls.retrieve(0), 77);
 
    // no negatives
    added = ls.add(-10);
    EXPECT_EQ(added, false);
+   EXPECT_EQ(ls.retrieve(100), ERROR_INDEX);
 }
 
 TEST(MtfTest, list_reset) {
@@ -83,7 +84,7 @@ TEST(MtfTest, node_deletion) {
    remed = ls.remove(88);
    EXPECT_EQ(remed, true);
    EXPECT_EQ(ls.getCurrentSize(), 4);
-   /////EXPECT_EQ(ls.retrieve(2), 22);
+   EXPECT_EQ(ls.retrieve(1), 22);
 
    remed = ls.remove(11);
    EXPECT_EQ(remed, true);
@@ -121,7 +122,7 @@ TEST(MtfTest, node_creation_moves_to_front) {
 
    EXPECT_EQ(added, true);
    EXPECT_EQ(ls.getCurrentSize(), 5);
-   EXPECT_EQ(ls.retrieve(0), 55);
+   EXPECT_EQ(ls.retrieve(0), 11);
 
    added = ls.add(22);
    EXPECT_EQ(added, true);
@@ -139,7 +140,7 @@ TEST(MtfTest, node_membership_moves_to_front) {
 
    EXPECT_EQ(added, true);
    EXPECT_EQ(ls.getCurrentSize(), 5);
-   EXPECT_EQ(ls.retrieve(0), 55);
+   EXPECT_EQ(ls.retrieve(0), 11);
 
    bool match = ls.contains(22);
    EXPECT_EQ(match, true);

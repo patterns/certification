@@ -4,10 +4,11 @@
 #ifndef CDLINKEDLIST_H
 #define CDLINKEDLIST_H
 
-const int LIST_CAPACITY = (1024 - 1);
-const int NODE_HEAD = -99;
-const int NODE_UNDEFINED = -100;
-const int ERROR_INDEX = -101;
+
+const int NODE_HEAD = -99;         // the dummy item of the head node
+const int NODE_UNDEFINED = -100;   // general node error (e.g., nonexistent)
+const int ERROR_INDEX = -101;      // invalid index (parameter to retrieve)
+const bool ADD_MODE_FRONT = true;  // add new nodes to front or tail
 
 // nodes are linked together to make the list. The previous and next pointers
 // are the reason the list is double linked.
@@ -16,8 +17,9 @@ struct DListNode {
    DListNode *prev_;
    DListNode *next_;
    void initialize(int elem, DListNode *prev, DListNode *next);
-   DListNode *child();
-   DListNode *parent();
+   DListNode *clone(const int) const;
+   DListNode *child() const;
+   DListNode *parent() const;
 };
 
 //---------------------------------------------------------------------------
@@ -47,6 +49,7 @@ public:
    int getTraverseCount() const;
    int retrieve(const int index);
    void resetTraverseCount();
+   CDLinkedList &operator=(const CDLinkedList &);
 
 protected:
    DListNode *header_;

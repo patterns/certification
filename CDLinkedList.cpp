@@ -21,58 +21,10 @@ CDLinkedList::~CDLinkedList() {
 
 // List copy-constructor
 // (implement pass and return by value)
-CDLinkedList::CDLinkedList(const CDLinkedList &cdl) {
-   // make the head copy
-   DListNode *dummy = new DListNode;
-   dummy->initialize(NODE_HEAD, nullptr, nullptr);
-   header_ = dummy;
-   length_ = cdl.length_;
-   traverseCount_ = cdl.traverseCount_;
-
-   switch (cdl.length_) {
-      case 0: {  // empty list
-         break;
-      }
-      case 1: {  // single node
-         DListNode *tail = cdl.header_->prev_;
-         DListNode *newNode = new DListNode;
-         newNode->item_ = tail->item_;  // copy item
-         newNode->next_ = header_;      // circular link from tail
-         newNode->prev_ = header_;      // link child to head
-         header_->next_ = newNode;      // link head to child
-         header_->prev_ = newNode;      // circular link to tail
-         break;
-      }
-      default: {
-         DListNode *bookmark;
-
-         // make the node copies starting with tail (reverse)
-         DListNode *visit = cdl.header_->prev_;
-         DListNode *newNode = new DListNode;
-
-         newNode->item_ = visit->item_;  // copy tail
-         newNode->next_ = header_;       // link tail to head
-         newNode->prev_ = nullptr;       // placeholder for parent to tail
-         header_->prev_ = newNode;       // link head to tail
-
-         bookmark = newNode;    // bookmark the child
-         visit = visit->prev_;  // position cursor to the parent of tail
-
-         // non-tail nodes
-         for (int i = 1; i < cdl.length_; i++) {
-            newNode = new DListNode;
-            bookmark->prev_ = newNode;      // link child to new parent
-            newNode->item_ = visit->item_;  // copy item
-            newNode->next_ = bookmark;      // link parent to child
-            newNode->prev_ = nullptr;       // placeholder (for new node)
-            bookmark = newNode;             // bookmark the child
-            visit = visit->prev_;           // decrement cursor
-         }
-
-         bookmark->prev_ = header_;  // link zero node to head
-         header_->next_ = newNode;   // link head to zero node
-      }
-   }
+CDLinkedList::CDLinkedList(const CDLinkedList &rhs) {
+   header_ = rhs.header_->clone(rhs.length_);
+   length_ = rhs.length_;
+   traverseCount_ = rhs.traverseCount_;
 }
 
 // List length
@@ -87,7 +39,8 @@ bool CDLinkedList::isHeadNode(DListNode *n) const { return (n->item_ == NODE_HEA
 // Element identity
 bool CDLinkedList::elementMatch(DListNode *n, int elem) const { return (n->item_ == elem); }
 
-// node creation (TODO requirement states "add to front")
+// node creation
+// Requirement states "add to front".
 // The traverse count is expected to be updated. Which can be achieved
 // via an internal call to contains() or another method that concentrates
 // traversals. The internal call benefits overridden versions because
@@ -112,19 +65,34 @@ bool CDLinkedList::add(int elem) {
          header_->prev_ = newNode;
          break;
       }
-      case 1: {  // single node list
-         DListNode *n0 = header_->next_;
-         newNode->initialize(elem, n0, header_);
-         n0->next_ = newNode;
-         header_->prev_ = newNode;
+      case 1: {  // single node
+         if (ADD_MODE_FRONT) {  // new nodes are added to the front
+            DListNode *n0 = zeroNode();
+            newNode->initialize(elem, header_, n0);
+            n0->prev_ = newNode;
+            header_->next_ = newNode;
+
+         } else {   // we add the new node by attaching to the tail
+            DListNode *n0 = zeroNode();
+            newNode->initialize(elem, n0, header_);
+            n0->next_ = newNode;
+            header_->prev_ = newNode;
+         }
          break;
       }
       default: {
-         // we add the new node by attaching to the tail
-         DListNode *tn = tailNode();
-         newNode->initialize(elem, tn, header_);
-         tn->next_ = newNode;
-         header_->prev_ = newNode;
+         if (ADD_MODE_FRONT) {  // new nodes are added to the front
+            DListNode *n0 = zeroNode();
+            newNode->initialize(elem, header_, n0);
+            n0->prev_ = newNode;
+            header_->next_ = newNode;
+
+         } else {   // we add the new node by attaching to the tail
+            DListNode *tn = tailNode();
+            newNode->initialize(elem, tn, header_);
+            tn->next_ = newNode;
+            header_->prev_ = newNode;
+         }
       }
    }
 
@@ -202,20 +170,20 @@ int CDLinkedList::elementIndex(int elem) {
    }
    int index = 0;
    int total = 0;
-   DListNode *visit = header_->next_;  // position cursor to zero node
+   DListNode *visit = zeroNode();  // position cursor to zero node
 
-   while (visit->item_ != NODE_HEAD) {
-      if (visit->item_ == elem) {
+   while (!isHeadNode(visit)) {
+      if (elementMatch(visit, elem)) {
          break;  // found a matching element
       }
-      visit = visit->next_;  // position cursor to child node
+      visit = visit->child();  // position cursor to child node
       total++;               // track traversal/visits
       index++;               // increment node index
    }
 
-   traverseCount_ += total;  // store traversals
+   traversePlus(total);  // store traversals
 
-   if (visit->item_ == NODE_HEAD) {
+   if (isHeadNode(visit)) {
       // we looped through whole list, but no match
       return NODE_UNDEFINED;
    }
@@ -244,7 +212,7 @@ int CDLinkedList::retrieve(const int index) {
       }
 
       visit = visit->child();  // position cursor to child node
-      total++;               // track traversal/visits
+      total++;                 // track traversal/visits
    }
 
    traversePlus(total);  // store traversals
@@ -262,6 +230,22 @@ int CDLinkedList::getTraverseCount() const { return traverseCount_; }
 
 // Traverse count reset
 void CDLinkedList::resetTraverseCount() { traverseCount_ = 0; }
+
+// Assignment operator
+// see TICPP, Bruce Eckel for reference
+// in the same way that we need to implement the copy-constructor,
+// we must write the operator because we use dynamic allocation.
+CDLinkedList &CDLinkedList::operator=(const CDLinkedList &right) {
+   // check for self-assignment
+   if (this == &right) {
+      return *this;
+   }
+
+   length_ = right.length_;
+   traverseCount_ = right.traverseCount_;
+   header_ = right.header_->clone(right.length_);
+   return *this;
+}
 
 // Traverse count mathematical addition
 void CDLinkedList::traversePlus(int val) { traverseCount_ += val; }
@@ -300,19 +284,77 @@ void CDLinkedList::deleteNode(DListNode *node) {
    delete node;
 }
 
-// node initialization (see TIC )
+////////////////////////////////////////////////
+// DListNode members
+//
+
+// node initialization (see TICPP, Bruce Eckel)
 void DListNode::initialize(int elem, DListNode *prev, DListNode *next) {
    item_ = elem;
    prev_ = prev;
    next_ = next;
 }
 
-// next pointer getter
-DListNode *DListNode::child() {
-   return next_;
+// copy the nodes meant to be called by the header_ node
+DListNode *DListNode::clone(const int length) const {
+   // make the head copy
+   DListNode *dummy = new DListNode;
+   dummy->initialize(NODE_HEAD, nullptr, nullptr);
+
+   if (item_ != NODE_HEAD) {  // expect to be called by header_ node
+      return dummy;           // probably should throw exception here.....
+   }
+
+   switch (length) {
+      case 0: {  // empty list
+         break;
+      }
+      case 1: {  // single node
+         DListNode *tail = parent();
+         DListNode *newNode = new DListNode;
+         newNode->item_ = tail->item_;  // copy item
+         newNode->next_ = dummy;        // circular link from tail
+         newNode->prev_ = dummy;        // link child to head
+         dummy->next_ = newNode;        // link head to child
+         dummy->prev_ = newNode;        // circular link to tail
+         break;
+      }
+      default: {
+         DListNode *bookmark;
+
+         // make the node copies starting with tail (reverse)
+         DListNode *visit = parent();
+         DListNode *newNode = new DListNode;
+
+         newNode->item_ = visit->item_;  // copy tail
+         newNode->next_ = dummy;         // link tail to head
+         newNode->prev_ = nullptr;       // placeholder for parent to tail
+         dummy->prev_ = newNode;         // link head to tail
+
+         bookmark = newNode;       // bookmark the child
+         visit = visit->parent();  // position cursor to the parent of tail
+
+         // non-tail nodes
+         for (int i = 1; i < length; i++) {
+            newNode = new DListNode;
+            bookmark->prev_ = newNode;      // link child to new parent
+            newNode->item_ = visit->item_;  // copy item
+            newNode->next_ = bookmark;      // link parent to child
+            newNode->prev_ = nullptr;       // placeholder (for new node)
+            bookmark = newNode;             // bookmark the child
+            visit = visit->parent();        // decrement cursor
+         }
+
+         bookmark->prev_ = dummy;  // link zero node to head
+         dummy->next_ = newNode;   // link head to zero node
+      }
+   }
+
+   return dummy;
 }
 
+// next pointer getter
+DListNode *DListNode::child() const { return next_; }
+
 // previous pointer getter
-DListNode *DListNode::parent() {
-   return prev_;
-}
+DListNode *DListNode::parent() const { return prev_; }
