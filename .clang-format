@@ -1,0 +1,9 @@
+---
+# We'll use defaults from the Google style
+BasedOnStyle: Google
+IndentWidth: 3
+ConstructorInitializerIndentWidth: 3
+ContinuationIndentWidth: 3
+AccessModifierOffset: -3
+ColumnLimit: 100
+---
