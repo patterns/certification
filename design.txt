@@ -1,0 +1,32 @@
+program02:SortedList
+_spec_
+
+
+
+////////
+_design_
+
+
+
+////////
+_plan_
+
+  I. Reuse the program#1 project files
+     A. Rename CDLinkedList source files
+        1. Rename CDLinkedList.h to SortedList.h
+        2. Rename CDLinkedList.cpp to SortedListDefinition.h
+        3. Search and replace CDLinkedList with SortedList
+        4. Prefix the DListNode struct declaration with `template <typename T>`
+        5. Prefix the SorteList class declaration with `template <typename T>`
+        6. Change the namespace to `SortedList<T>::` for every member in SortedListDefinition
+        7. Replace `int` with T where the node item and element type is expected
+
+  X. Unit tests
+     A. Modify the CMakeLists.txt configuration files
+        1. See github.com/alisonbelow/cpp-templates
+ XI. Memory leak
+     A. commands
+        1. build with debug: g++ -std=c++11 -g driver.cpp -o debuglist
+        2. run check: valgrind --leak-check=full ./debuglist
+
+
