@@ -12,18 +12,37 @@ _design_
 _plan_
 
   I. Reuse the program#1 project files
-     A. Rename CDLinkedList source files
+     A. Convert CDLinkedList source files
         1. Rename CDLinkedList.h to SortedList.h
-        2. Rename CDLinkedList.cpp to SortedListDefinition.h
+        2. Rename CDLinkedList.cpp to SortedList.cpp
         3. Search and replace CDLinkedList with SortedList
-        4. Prefix the DListNode struct declaration with `template <typename T>`
-        5. Prefix the SorteList class declaration with `template <typename T>`
-        6. Change the namespace to `SortedList<T>::` for every member in SortedListDefinition
-        7. Replace `int` with T where the node item and element type is expected
+        4. Prefix the DListNode struct declaration with `template <typename Object>`
+        5. Prefix the SortedList class declaration with `template <typename Object>`
+        6. Change the namespace to `SortedList<Object>::` for every member in definitions
+        7. Replace `int` with Object where the node item and element type is expected
+        8. Start with `int` as default type of Object
+        9. Change `protected` members to `private`
+        10. Add #include "SortedList.cpp" to bottom of SortedList.h
+     B. Reconfig unit tests
+        1. Modify the CMakeLists.txt configuration files
+           a. Remove "SortedList.cpp" from CMakeLists.txt
+           b. Add `include_directories` for path to project root ("..")
+           c. More about inclusion, see github.com/alisonbelow/cpp-templates
 
-  X. Unit tests
-     A. Modify the CMakeLists.txt configuration files
-        1. See github.com/alisonbelow/cpp-templates
+ II. Enhancement
+     A. DListNode
+        1. Add new property for node type (abandon the reserved NODE_HEAD)
+           a. Head
+           b. Element
+     B. List Properties
+        1. size()
+     B. Overload operators
+        1. Printing to cout, operator<<
+        2. Convert retrieve, operator[]
+
+     Y. Convert unit tests
+     Z. Default and zero values for the primitive types
+        1. What is the representation of the (old) NODE_HEAD value?
  XI. Memory leak
      A. commands
         1. build with debug: g++ -std=c++11 -g driver.cpp -o debuglist
