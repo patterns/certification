@@ -1,6 +1,6 @@
-# CSS501 Program1: MTF v Transpose
+# CSS501 Program2: Sorted List
 
-If you use your `driver.cpp` or `LLStats.cpp`, build with:
+If you use your `driver.cpp` , build with:
 
 ```bash
 g++ -std=c++11 *.cpp

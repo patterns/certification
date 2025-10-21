@@ -29,37 +29,37 @@ int main() {
 
    cout << "Reset traverse count: traverseCount=" << testList.getTraverseCount() << endl;
 
-   cout << "#members 1->7->8->5->1: size=" << testList.getCurrentSize()
+   cout << "#members 1->7->8->5->1: size=" << testList.size()
         << ", traverseCount=" << testList.getTraverseCount() << endl;
    ;
    cout << "traverse count=" << testList.getTraverseCount() << endl;
-   ////for (int i = 0; i < testList.getCurrentSize(); i++) cout << testList.retrieve(i) << endl;
+
    dumpcopy<>(testList);
 
    cout << endl;
    testList.remove(8);
 
-   cout << "#After remove 8, : size= " << testList.getCurrentSize()
+   cout << "#After remove 8, : size= " << testList.size()
         << ", traverseCount=" << testList.getTraverseCount() << endl;
    ;
    cout << "traverse count=" << testList.getTraverseCount() << endl;
-   ////for (int i = 0; i < testList.getCurrentSize(); i++) cout << testList.retrieve(i) << endl;
+
    dumpcopy<>(testList);
 
    cout << endl;
    cout << "testList.contains(8)=" << testList.contains(8) << endl;
 
-   cout << "# members, after access 8: size= " << testList.getCurrentSize()
+   cout << "# members, after access 8: size= " << testList.size()
         << ", traverseCount=" << testList.getTraverseCount() << endl;
    ;
-   ////for (int i = 0; i < testList.getCurrentSize(); i++) cout << testList.retrieve(i) << endl;
+
    dumpcopy<>(testList);
 
    cout << "testList.contains(7)=" << testList.contains(7) << endl;
 
-   cout << "# members, after access 7: size= " << testList.getCurrentSize()
+   cout << "# members, after access 7: size= " << testList.size()
         << ", traverseCount=" << testList.getTraverseCount() << endl;
-   ////for (int i = 0; i < testList.getCurrentSize(); i++) cout << testList.retrieve(i) << endl;
+
    dumpcopy<>(testList);
 
    return 0;

@@ -5,9 +5,12 @@
 // List constructor
 template <typename T>
 SortedList<T>::SortedList() {
-   DListNode<T> *dummy = new DListNode<T>;
-   dummy->initialize(NODE_HEAD, nullptr, nullptr);
-   header_ = dummy;
+   SListNode<T> *dummy = new SListNode<T>(HeadNode, true);
+   ////dummy->initialize(NODE_HEAD, nullptr, nullptr);
+   ////dummy->ntype_ = HeadNode;
+   dummy->next_ = nullptr;
+   dummy->prev_ = nullptr;
+   header = dummy;
    length_ = 0;
    traverseCount_ = 0;
 }
@@ -16,40 +19,28 @@ SortedList<T>::SortedList() {
 template <typename T>
 SortedList<T>::~SortedList() {
    clear();
-   delete header_;
+   delete header;
 }
 
 // List copy-constructor
 // (implement pass and return by value)
 template <typename T>
 SortedList<T>::SortedList(const SortedList<T> &rhs) {
-   header_ = rhs.header_->clone(rhs.length_);
+   header = rhs.header->clone(rhs.length_);
    length_ = rhs.length_;
    traverseCount_ = rhs.traverseCount_;
 }
 
-// List length
-template <typename T>
-int SortedList<T>::getCurrentSize() const {
-   return length_;
-}
-
-// List empty identity
-template <typename T>
-bool SortedList<T>::isEmpty() const {
-   return (length_ == 0);
-}
-
 // List head identity
 template <typename T>
-bool SortedList<T>::isHeadNode(DListNode<T> *n) const {
-   return (n->item_ == NODE_HEAD);
+bool SortedList<T>::isHeadNode(SListNode<T> *n) const {
+   return n->isHeadNode();
 }
 
 // Element identity
 template <typename T>
-bool SortedList<T>::elementMatch(DListNode<T> *n, T elem) const {
-   return (n->item_ == elem);
+bool SortedList<T>::elementMatch(SListNode<T> *n, T elem) const {
+   return n->elementMatch(elem);
 }
 
 // node creation
@@ -68,44 +59,44 @@ bool SortedList<T>::add(T elem) {
       return true;  // duplicates are ignored according to requirement
    }
 
-   DListNode<T> *newNode = new DListNode<T>;
+   SListNode<T> *newNode = new SListNode<T>(elem);
 
    switch (length_) {
       case 0: {  // the empty list
          // the head node's next/prev began as nullptr,
          // and new node's prev will point to the head
-         newNode->initialize(elem, header_, header_);
-         header_->next_ = newNode;
-         header_->prev_ = newNode;
+         newNode->initialize(elem, header, header);
+         header->next_ = newNode;
+         header->prev_ = newNode;
          break;
       }
       case 1: {                 // single node
          if (ADD_MODE_FRONT) {  // new nodes are added to the front
-            DListNode<T> *n0 = zeroNode();
-            newNode->initialize(elem, header_, n0);
+            SListNode<T> *n0 = zeroNode();
+            newNode->initialize(elem, header, n0);
             n0->prev_ = newNode;
-            header_->next_ = newNode;
+            header->next_ = newNode;
 
          } else {  // we add the new node by attaching to the tail
-            DListNode<T> *n0 = zeroNode();
-            newNode->initialize(elem, n0, header_);
+            SListNode<T> *n0 = zeroNode();
+            newNode->initialize(elem, n0, header);
             n0->next_ = newNode;
-            header_->prev_ = newNode;
+            header->prev_ = newNode;
          }
          break;
       }
       default: {
          if (ADD_MODE_FRONT) {  // new nodes are added to the front
-            DListNode<T> *n0 = zeroNode();
-            newNode->initialize(elem, header_, n0);
+            SListNode<T> *n0 = zeroNode();
+            newNode->initialize(elem, header, n0);
             n0->prev_ = newNode;
-            header_->next_ = newNode;
+            header->next_ = newNode;
 
          } else {  // we add the new node by attaching to the tail
-            DListNode<T> *tn = tailNode();
-            newNode->initialize(elem, tn, header_);
+            SListNode<T> *tn = tailNode();
+            newNode->initialize(elem, tn, header);
             tn->next_ = newNode;
-            header_->prev_ = newNode;
+            header->prev_ = newNode;
          }
       }
    }
@@ -126,11 +117,11 @@ bool SortedList<T>::remove(T elem) {
    }
 
    int total = 0;
-   DListNode<T> *visit = header_->next_;  // position cursor to zero node
+   SListNode<T> *visit = zeroNode();  // position cursor to zero node
 
    for (int i = 0; i < index; i++) {
-      visit = visit->next_;  // position cursor to child node
-      total++;               // track traversal/visits
+      visit = visit->child();  // position cursor to child node
+      total++;                 // track traversal/visits
    }
 
    deleteNode(visit);  // release node resources
@@ -139,7 +130,7 @@ bool SortedList<T>::remove(T elem) {
 }
 
 // List reset
-// we avoid traversal by using the tail pointer
+// remove nodes starting at tail end
 template <typename T>
 void SortedList<T>::clear() {
    switch (length_) {
@@ -147,12 +138,12 @@ void SortedList<T>::clear() {
          return;
       }
       case 1: {
-         deleteNode(header_->next_);
+         deleteNode(zeroNode());
          break;
       }
       default: {
          for (int i = length_; i > 0; i--) {
-            DListNode<T> *tn = tailNode();
+            SListNode<T> *tn = tailNode();
             deleteNode(tn);
          }
       }
@@ -160,8 +151,8 @@ void SortedList<T>::clear() {
 
    length_ = 0;
    resetTraverseCount();
-   header_->prev_ = nullptr;
-   header_->next_ = nullptr;
+   header->prev_ = nullptr;
+   header->next_ = nullptr;
 }
 
 // node membership
@@ -183,12 +174,12 @@ bool SortedList<T>::contains(T elem) {
 // since locating the node by element is repeated, this may be reused.
 template <typename T>
 int SortedList<T>::elementIndex(T elem) {
-   if (isEmpty() || elem < 0) {
+   if (empty() || elem < 0) {
       return NODE_UNDEFINED;
    }
    int index = 0;
    int total = 0;
-   DListNode<T> *visit = zeroNode();  // position cursor to zero node
+   SListNode<T> *visit = zeroNode();  // position cursor to zero node
 
    while (!isHeadNode(visit)) {
       if (elementMatch(visit, elem)) {
@@ -209,7 +200,6 @@ int SortedList<T>::elementIndex(T elem) {
    return index;
 }
 
-
 // Traverse count getter
 template <typename T>
 int SortedList<T>::getTraverseCount() const {
@@ -223,9 +213,6 @@ void SortedList<T>::resetTraverseCount() {
 }
 
 // Assignment operator
-// see TICPP, Bruce Eckel for reference
-// in the same way that we need to implement the copy-constructor,
-// we must write the operator because we use dynamic allocation.
 template <typename T>
 SortedList<T> &SortedList<T>::operator=(const SortedList<T> &right) {
    // check for self-assignment
@@ -235,25 +222,24 @@ SortedList<T> &SortedList<T>::operator=(const SortedList<T> &right) {
 
    length_ = right.length_;
    traverseCount_ = right.traverseCount_;
-   header_ = right.header_->clone(right.length_);
+   header = right.header->clone(right.length_);
    return *this;
 }
 
 // Index operator
 template <typename T>
 T SortedList<T>::operator[](const int index) {
-
-   if (isEmpty() || index < 0) {
-      return ERROR_INDEX;
+   if (empty() || index < 0) {
+      return NULL;
    }
 
-   int max = size();    // zero-index means largest is one less than total
-   if (index > (max - 1)) {
-      return ERROR_INDEX;
+   int max = size() - 1;  // zero-index means max is one less than length
+   if (index > max) {
+      return NULL;
    }
 
    int total = 0;
-   DListNode<T> *visit = zeroNode();  // position cursor to zero node
+   SListNode<T> *visit = zeroNode();  // position cursor to zero node
 
    while (!isHeadNode(visit)) {
       if (index == total) {
@@ -269,10 +255,10 @@ T SortedList<T>::operator[](const int index) {
 
    if (isHeadNode(visit)) {
       // we looped through whole list, but no match
-      return NODE_UNDEFINED;
+      return NULL;
    }
 
-   return visit->item_;
+   return visit->element();
 }
 
 // Traverse count mathematical addition
@@ -283,14 +269,14 @@ void SortedList<T>::traversePlus(int val) {
 
 // head node's prev pointer always indicates the tail node
 template <typename T>
-DListNode<T> *SortedList<T>::tailNode() {
-   return header_->prev_;
+SListNode<T> *SortedList<T>::tailNode() {
+   return header->prev_;
 }
 
 // head node's next pointer always indicates the first node (with index 0)
 template <typename T>
-DListNode<T> *SortedList<T>::zeroNode() const {
-   return header_->next_;
+SListNode<T> *SortedList<T>::zeroNode() const {
+   return header->next_;
 }
 
 // size returns the node count (length)
@@ -299,11 +285,17 @@ int SortedList<T>::size() const {
    return length_;
 }
 
+// empty returns true when size is zero
+template <typename T>
+bool SortedList<T>::empty() const {
+   return (length_ == 0);
+}
+
 // delete a list node and free resources
 // for use by the clear() method, and the contains() in the overridden versions to achieve swapping.
 // Accepts the pointer to the target node as parameter.
 template <typename T>
-void SortedList<T>::deleteNode(DListNode<T> *node) {
+void SortedList<T>::deleteNode(SListNode<T> *node) {
    switch (length_) {
       case 0: {
          // empty list, unreachable?
@@ -311,13 +303,13 @@ void SortedList<T>::deleteNode(DListNode<T> *node) {
       }
       case 1: {
          // single node list
-         header_->next_ = nullptr;
-         header_->prev_ = nullptr;
+         header->next_ = nullptr;
+         header->prev_ = nullptr;
          break;
       }
       default: {
          // first detach (make into orphan)
-         DListNode<T> *parent = node->prev_;
+         SListNode<T> *parent = node->prev_;
          node->next_->prev_ = parent;
          parent->next_ = node->next_;
       }
@@ -334,11 +326,11 @@ void SortedList<T>::deleteNode(DListNode<T> *node) {
 
 // Print stream operator (see example from TICPP p.738)
 template <typename T>
-std::ostream& operator<<(std::ostream& os, const SortedList<T>& right) {
-   DListNode<T> *visit = right.zeroNode();
+std::ostream &operator<<(std::ostream &os, const SortedList<T> &right) {
+   SListNode<T> *visit = right.zeroNode();
 
-   for (int i=0; i < right.size(); i++) {
-      os << visit->item_ << ", ";
+   for (int i = 0; i < right.size(); i++) {
+      os << visit->element() << ", ";
       visit = visit->child();
    }
 
@@ -346,87 +338,4 @@ std::ostream& operator<<(std::ostream& os, const SortedList<T>& right) {
    // TODO is empty line expected for empty list?
 
    return os;
-}
-
-////////////////////////////////////////////////
-// DListNode members
-//
-
-// node initialization (see TICPP, Bruce Eckel)
-template <typename T>
-void DListNode<T>::initialize(T elem, DListNode<T> *prev, DListNode<T> *next) {
-   item_ = elem;
-   prev_ = prev;
-   next_ = next;
-}
-
-// copy the nodes meant to be called by the header_ node
-template <typename T>
-DListNode<T> *DListNode<T>::clone(const int length) const {
-   // make the head copy
-   DListNode *dummy = new DListNode;
-   dummy->initialize(NODE_HEAD, nullptr, nullptr);
-
-   if (item_ != NODE_HEAD) {  // expect to be called by header_ node
-      return dummy;           // probably should throw exception here.....
-   }
-
-   switch (length) {
-      case 0: {  // empty list
-         break;
-      }
-      case 1: {  // single node
-         DListNode<T> *tail = parent();
-         DListNode<T> *newNode = new DListNode<T>;
-         newNode->item_ = tail->item_;  // copy item
-         newNode->next_ = dummy;        // circular link from tail
-         newNode->prev_ = dummy;        // link child to head
-         dummy->next_ = newNode;        // link head to child
-         dummy->prev_ = newNode;        // circular link to tail
-         break;
-      }
-      default: {
-         DListNode<T> *bookmark;
-
-         // make the node copies starting with tail (reverse)
-         DListNode<T> *visit = parent();
-         DListNode<T> *newNode = new DListNode<T>;
-
-         newNode->item_ = visit->item_;  // copy tail
-         newNode->next_ = dummy;         // link tail to head
-         newNode->prev_ = nullptr;       // placeholder for parent to tail
-         dummy->prev_ = newNode;         // link head to tail
-
-         bookmark = newNode;       // bookmark the child
-         visit = visit->parent();  // position cursor to the parent of tail
-
-         // non-tail nodes
-         for (int i = 1; i < length; i++) {
-            newNode = new DListNode<T>;
-            bookmark->prev_ = newNode;      // link child to new parent
-            newNode->item_ = visit->item_;  // copy item
-            newNode->next_ = bookmark;      // link parent to child
-            newNode->prev_ = nullptr;       // placeholder (for new node)
-            bookmark = newNode;             // bookmark the child
-            visit = visit->parent();        // decrement cursor
-         }
-
-         bookmark->prev_ = dummy;  // link zero node to head
-         dummy->next_ = newNode;   // link head to zero node
-      }
-   }
-
-   return dummy;
-}
-
-// next pointer getter
-template <typename T>
-DListNode<T> *DListNode<T>::child() const {
-   return next_;
-}
-
-// previous pointer getter
-template <typename T>
-DListNode<T> *DListNode<T>::parent() const {
-   return prev_;
 }
