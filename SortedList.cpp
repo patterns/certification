@@ -230,12 +230,12 @@ SortedList<T> &SortedList<T>::operator=(const SortedList<T> &right) {
 template <typename T>
 T SortedList<T>::operator[](const int index) {
    if (empty() || index < 0) {
-      return NULL;
+      return T(NULL);
    }
 
    int max = size() - 1;  // zero-index means max is one less than length
    if (index > max) {
-      return NULL;
+      return T(NULL);
    }
 
    int total = 0;
@@ -251,11 +251,11 @@ T SortedList<T>::operator[](const int index) {
       total++;                 // track traversal/visits
    }
 
-   traversePlus(total);  // store traversals
+   ////traversePlus(total);  // store traversals
 
    if (isHeadNode(visit)) {
       // we looped through whole list, but no match
-      return NULL;
+      return T(NULL);
    }
 
    return visit->element();

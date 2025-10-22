@@ -12,24 +12,6 @@ const int NODE_HEAD = -99;         // the dummy item of the head node
 const int NODE_UNDEFINED = -100;   // general node error (e.g., nonexistent)
 const int ERROR_INDEX = -101;      // invalid index (parameter to retrieve)
 const bool ADD_MODE_FRONT = true;  // add new nodes to front or tail
-/*********
-// nodes are linked together to make the list. The previous and next pointers
-// are the reason the list is double linked.
-template <typename T>
-struct DListNode {
-   enum {HeadNode, ItemNode, ErrorNode} tag;
-   union {
-      char hn;
-      T item_;
-      int error_;
-   }
-   DListNode *prev_;
-   DListNode *next_;
-   void initialize(T elem, DListNode *prev, DListNode *next);
-   DListNode *clone(const int) const;
-   DListNode *child() const;
-   DListNode *parent() const;
-};************/
 
 //---------------------------------------------------------------------------
 // SortedList:  circular double linked list composed of 'DListNode' nodes.
