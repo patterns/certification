@@ -25,7 +25,7 @@ const bool ADD_MODE_FRONT = true;  // add new nodes to front or tail
 //   -- The beginning of the list is marked by the 'header_' attribute.
 //   -- header_ is a pointer to a dummy 'DListNode' with the tail node
 //      linked by the previous pointer.
-template <typename Object = int>
+template <typename Object>
 class SortedList {
 public:
    SortedList();  // the constructor
@@ -40,11 +40,11 @@ public:
    int getTraverseCount() const;
 
    void resetTraverseCount();
-   SortedList<Object> &operator=(const SortedList<Object> &);  // assignment copy
+   SortedList<Object> &operator=(const SortedList<Object> &);  // assignment-copy
 
    template <typename T>
    friend std::ostream &operator<<(std::ostream &, const SortedList<T> &);  // print stream
-   Object operator[](const int);
+   Object operator[](const int) const;                                      // index access
 
 private:
    SListNode<Object> *header;

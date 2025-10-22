@@ -4,22 +4,20 @@
 
 // List constructor
 template <typename T>
-SortedList<T>::SortedList() {
+SortedList<T>::SortedList() : length_(0) {
    SListNode<T> *dummy = new SListNode<T>(HeadNode, true);
-   ////dummy->initialize(NODE_HEAD, nullptr, nullptr);
-   ////dummy->ntype_ = HeadNode;
    dummy->next_ = nullptr;
    dummy->prev_ = nullptr;
    header = dummy;
-   length_ = 0;
+   ////length_ = 0;
    traverseCount_ = 0;
 }
 
 // List deconstructor
 template <typename T>
 SortedList<T>::~SortedList() {
-   clear();
-   delete header;
+   ////clear();
+   ////delete header;
 }
 
 // List copy-constructor
@@ -174,7 +172,7 @@ bool SortedList<T>::contains(T elem) {
 // since locating the node by element is repeated, this may be reused.
 template <typename T>
 int SortedList<T>::elementIndex(T elem) {
-   if (empty() || elem < 0) {
+   if (empty()) {
       return NODE_UNDEFINED;
    }
    int index = 0;
@@ -228,14 +226,14 @@ SortedList<T> &SortedList<T>::operator=(const SortedList<T> &right) {
 
 // Index operator
 template <typename T>
-T SortedList<T>::operator[](const int index) {
+T SortedList<T>::operator[](const int index) const {
    if (empty() || index < 0) {
-      return T(NULL);
+      return safeNull<T>();
    }
 
    int max = size() - 1;  // zero-index means max is one less than length
    if (index > max) {
-      return T(NULL);
+      return safeNull<T>();
    }
 
    int total = 0;
@@ -255,7 +253,7 @@ T SortedList<T>::operator[](const int index) {
 
    if (isHeadNode(visit)) {
       // we looped through whole list, but no match
-      return T(NULL);
+      return safeNull<T>();
    }
 
    return visit->element();

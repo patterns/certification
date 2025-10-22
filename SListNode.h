@@ -1,7 +1,24 @@
 // SListNode.h; Hsin-ih Tu; 2025.10.20;
 // Declaration of list node
 
+#include <type_traits>
+
 enum NodeType { HeadNode, ItemNode, ErrorNode };
+
+// helper to coerce to "NULL"
+template <typename T>
+T safeNull() {
+   if (!std::is_fundamental<T>()) {
+      return T();
+      // check for string type, and use C string to coerce
+      // if constexpr(std::is_same_v<decltype(T), std::string>)
+      // const char *nothing = nullptr;
+      // return T(nothing);
+      ////return NULL;
+   } else {
+      return T(NULL);
+   }
+}
 
 // nodes can be three kinds head, item, error
 template <typename T>

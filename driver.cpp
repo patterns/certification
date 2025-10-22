@@ -15,7 +15,7 @@ void dumpcopy(SortedList<T> sl) {
 }
 
 int main() {
-   SortedList<> testList;
+   SortedList<int> testList;
 
    // Reset all traverse count first
    testList.resetTraverseCount();
