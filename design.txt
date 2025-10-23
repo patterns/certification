@@ -1,11 +1,88 @@
-program02:SortedList
+CSS501 Program 2; Hsin-ih Tu; 2025.10.22
 _spec_
+The goal is to generalize the list into a Sorted List. Building on the circular double linked list from Program 1, the node item will not be limited to integer values. Node items can now be any fundamental data type (e.g., float, char*). In addition, the standard library string data type will also be supported for the item type. 
 
+To maintain the order of node items, new nodes are inserted into the correct position in the node chain.
 
-
+To be STL compatible, index/assignment/append/equals operators will be overloaded.
 ////////
 _design_
+The ADT circular double linked list still has the head node that links to the first node with the next pointer, and the tail node with the previous pointer. Now the class declaration will be prefixed by `template <typename Object>` in order to support any of the fundamental data types.
 
+
+====================
+template <typename T>
+std::ostream &operator<<(std::ostream &os, const SortedList<T> &right);
+Overload the print stream operator which notably is not a member method of our list, but a `friend` method. The behavior is to loop through the list nodes (right hand side), and send each node item to the output stream. For example, `out << visit->element() << ", "`. The comma is the delimiter, and will need a final conditional after the loop to avoid a "hanging comma".
+
+====================
+template <typename Object>
+Object SortedList<Object>::operator[](const int index) const;
+Refactor the old retrieve member method into the new index operator. The operator accepts the index position to be accessed, and returns the item value of type Object. On error, the return value is NULL which can be expressed as T(NULL) for fundamental types; for std::string NULL (nullptr) cannot be coerced into a string (not pointer), we are using T() which is the default value of the type. Another approach allowed is throwing an exception (e.g., Out Of Bounds).
+
+====================
+template <typename Object>
+SortedList<Object>& SortedList<Object>::operator+(const SortedList<Object> &right);
+Overload the append member operator. Accepts a list as the right hand side operand, and returns a new list result. The result is the merge of the two lists. On error such as memory allocation failure, the return result should be NULL; another approach is throw the exception.
+
+====================
+template <typename Object>
+bool SortedList<Object>::operator==(const SortedList<Object> &right) const;
+Overload the equals comparison member operator. Accepts a list as the right hand side operand, and returns the result as boolean. The comparison checks each node item pair is equivalent, and returns true when the values match. Otherwise, the return value is false.
+
+====================
+template <typename Object>
+SortedList<Object>& SortedList<Object>::operator=(const SortedList<Object> &right) const;
+Verify the copy assignment member operator. Accepts a list as the right hand side operand, and returns a new list result. The result is the copy of the rhs list. On error such as memory allocation failure, the return result should be NULL; another approach is throw the exception.
+
+====================
+template <typename Object>
+SortedList<Object>& SortedList<Object>::operator=(SortedList<Object> &&right);
+Overload the move assignment member operator. Accepts a list as the right hand side operand, and returns a new list reference. The result is the shallow copy of the rhs list.  On error such as memory allocation failure, the return result should be NULL.
+
+====================
+template <typename Object>
+SortedList<Object>::SortedList(const SortedList<Object> &right);
+Verify the copy constructor. Accepts a list as the parameter, and makes copies of the nodes. The result is the new instance of the list. On error such as memory allocation failure, the result can be an empty list; depending if the allocation occured on the head node, another approach is throw the exception.
+
+====================
+template <typename Object>
+SortedList<Object>::SortedList(SortedList<Object> &&right);
+Overload the move constructor. Accepts a list as the parameter, and makes a new instance of the list reference. The result is the shallow copy of the list nodes. On error such as memory allocation failure, the result can be an empty list; depending if the allocation occured on the head node, another approach is throw the exception.
+
+====================
+template <typename Object>
+SortedList<Object>::~SortedList();
+Verify the destructor. The member method clear is invoked then release the head resource. Do not throw exceptions, rather send errors to stderr because this stage is the end of the object life so causing exceptions postpones the object termination. Because std::string is not a fundamental type, we need to verify node items of string type can be released safely, and it can involve the members of the SListdNode definition.
+
+====================
+template <typename Object>
+bool SortedList::insert(Object elem);
+The insert member method accepts the new node item value of type Object, and returns a result as boolean. On error, such as dynamic memory allocation "out of memory", the result boolean returned is `false`. The steps to follow to successfully insert:
+1. Loop through the list, comparing the new item (N) against each list node (X).
+2. The correct position (I) is when N is greater or equal (>=) than X.
+3. Insert into position I by assigning
+   a) X's old parent's next pointer to N
+   b) N's previous pointer to old parent
+   c) X's previous pointer to N
+   d) N's next pointer to X
+4. Return true on completion.
+
+====================
+enum NodeType { HeadNode, ItemNode, ErrorNode };
+template <typename T>
+class SListNode {
+   NodeType ntype_;
+   union {
+      bool hn_;
+      T item_;
+      short int error_;
+   };
+
+public:
+.....
+}
+The node declaration is changed from struct to class in order to implement a tagged union. Its node type (ntype) attribute holds one of the enumerated values HeadNode/ItemNode/ErrorNode. The ntype becomes the way to know whether a node is the list head because we are abandoning the constant NODE_HEAD that we used in Program 1.
 
 
 ////////
@@ -30,20 +107,47 @@ _plan_
            c. More about inclusion, see github.com/alisonbelow/cpp-templates
 
  II. Enhancement
-     A. DListNode
-        1. Add new property for node type (abandon the reserved NODE_HEAD)
-           a. Head
-           b. Element
-     B. List Properties
-        1. size()
-     B. Overload operators
-        1. Printing to cout, operator<<
-        2. Convert retrieve, operator[]
+     A. List Properties
+        1. Replace `getCurrentSize` with `size`
+        2. Replace `isEmpty` with `empty`
+     B. Overload Operators
+        1. Convert stream output, operator<<
+        2. Refactor retrieve, operator[]
+           a. return T(NULL) for error conditions
+        3. append, operator+
+        4. equiv comparison, operator==
+        5. Verify assignment (copy) and add the move assignment (operator=)
+     C. List Methods
+        1. Verify constructor (copy) and add the move constructor
+        2. Verify destructor
+        3. Verify remove
+        4. Verify clear
+        5. Convert add to insert (position&shift algorithm)
+     D. DListNode to SListNode
+        1. To detect the head node in conditionals? (abandon the reserved NODE_HEAD)
+           a. Add new property for node type, enum {HeadNode, ItemNode, ErrorNode}
+           b. Reflection ? (not necessary)
+        2. Refactor NODE_HEAD logic
+        3. destructor
+           a. string is not fundamental type
+           b. std::is_trivial_destructable
+     E. Error handling
+        1. Generic return value (abandon the reserved ERROR_INDEX)
+           a. Add a error method that switches on primitive types
+           b. Extend Object/primitive types with an error-value member?
+           c. Throw exceptions ? (worst option)
+        2. NULL return value (abandon the reserved NODE_UNDEFINED)
+           a. Causes "implicit conversion of NULL" warnings in operator[]
 
-     Y. Convert unit tests
-     Z. Default and zero values for the primitive types
-        1. What is the representation of the (old) NODE_HEAD value?
- XI. Memory leak
+     F. Convert unit tests
+        1. Add test for primitive type: char
+        2. Add test for primitive type: float
+        3. Add test for standard type: string
+        4. Add test for primitive type: unsigned int
+        4. Add test for primitive type: char[]
+     G. Default and zero values for the primitive types
+
+III. Memory leak
      A. commands
         1. build with debug: g++ -std=c++11 -g driver.cpp -o debuglist
         2. run check: valgrind --leak-check=full ./debuglist
