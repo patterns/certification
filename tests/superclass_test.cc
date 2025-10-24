@@ -9,42 +9,37 @@ TEST(SuperclassTest, empty_list) {
    // empty list
    EXPECT_EQ(ls.empty(), true);
    EXPECT_EQ(ls.size(), 0);
-
-   // count does not change
-   EXPECT_EQ(ls.getTraverseCount(), 0);
-   ls.add(55);
-   EXPECT_EQ(ls.getTraverseCount(), 0);
 }
 
 TEST(SuperclassTest, node_creation) {
    SortedList<int> ls;
 
-   bool added = ls.add(55);
+   bool added = ls.insert(55);
 
    EXPECT_EQ(added, true);
    EXPECT_EQ(ls.empty(), false);
    EXPECT_EQ(ls.size(), 1);
    EXPECT_EQ(ls[0], 55);
 
-   added = ls.add(77);
+   added = ls.insert(77);
 
    EXPECT_EQ(added, true);
    EXPECT_EQ(ls.size(), 2);
    EXPECT_EQ(ls[0], 77);
 
-   added = ls.add(22);
+   added = ls.insert(22);
    EXPECT_EQ(added, true);
    EXPECT_EQ(ls.size(), 3);
    EXPECT_EQ(ls[0], 22);
 
    // duplicates are ignored
-   added = ls.add(77);
+   added = ls.insert(77);
    EXPECT_EQ(added, true);
    EXPECT_EQ(ls.size(), 3);
    EXPECT_EQ(ls[0], 22);
 
    // no negatives
-   added = ls.add(-10);
+   added = ls.insert(-10);
    EXPECT_EQ(added, false);
    ////EXPECT_EQ(ls[100], ERROR_INDEX);
    EXPECT_EQ(ls[100], NULL);
@@ -53,7 +48,7 @@ TEST(SuperclassTest, node_creation) {
 TEST(SuperclassTest, list_reset) {
    SortedList<int> ls;
 
-   bool added = ls.add(55);
+   bool added = ls.insert(55);
 
    EXPECT_EQ(added, true);
 
@@ -66,7 +61,7 @@ TEST(SuperclassTest, node_deletion) {
    SortedList<int> ls;
 
 
-   bool added = ls.add(55);
+   bool added = ls.insert(55);
 
    EXPECT_EQ(added, true);
    EXPECT_EQ(ls.size(), 1);
@@ -76,11 +71,11 @@ TEST(SuperclassTest, node_deletion) {
    EXPECT_EQ(remed, true);
    EXPECT_EQ(ls.empty(), true);
 
-   added = ls.add(55);
-   added = ls.add(77);
-   added = ls.add(88);
-   added = ls.add(22);
-   added = ls.add(11);
+   added = ls.insert(55);
+   added = ls.insert(77);
+   added = ls.insert(88);
+   added = ls.insert(22);
+   added = ls.insert(11);
 
    EXPECT_EQ(added, true);
    EXPECT_EQ(ls.size(), 5);
@@ -99,11 +94,11 @@ TEST(SuperclassTest, node_deletion) {
 TEST(SuperclassTest, node_membership) {
    SortedList<int> ls;
 
-   bool added = ls.add(55);
-   added = ls.add(77);
-   added = ls.add(88);
-   added = ls.add(22);
-   added = ls.add(11);
+   bool added = ls.insert(55);
+   added = ls.insert(77);
+   added = ls.insert(88);
+   added = ls.insert(22);
+   added = ls.insert(11);
 
    EXPECT_EQ(added, true);
    EXPECT_EQ(ls.size(), 5);

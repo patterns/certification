@@ -13,7 +13,7 @@ TEST(SortedListTest, out_of_bounds) {
    EXPECT_EQ(ls[0], int(NULL));
 
    // single node
-   ls.add(55);
+   ls.insert(55);
    EXPECT_EQ(ls.size(), 1);
    EXPECT_EQ(ls[11], int(NULL));
    EXPECT_EQ(ls[-99], int(NULL));
