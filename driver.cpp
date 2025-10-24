@@ -17,22 +17,18 @@ void dumpcopy(SortedList<T> sl) {
 int main() {
    SortedList<int> testList;
 
-   // Reset all traverse count first
-   testList.resetTraverseCount();
    cout << "Make a list" << endl;
 
-   testList.add(1);
-   testList.add(7);
-   testList.add(8);
-   testList.add(5);
-   testList.add(1);
+   testList.insert(1);
+   testList.insert(7);
+   testList.insert(8);
+   testList.insert(5);
+   testList.insert(1);
 
-   cout << "Reset traverse count: traverseCount=" << testList.getTraverseCount() << endl;
 
    cout << "#members 1->7->8->5->1: size=" << testList.size()
-        << ", traverseCount=" << testList.getTraverseCount() << endl;
+        << ", " << endl;
    ;
-   cout << "traverse count=" << testList.getTraverseCount() << endl;
 
    dumpcopy<>(testList);
 
@@ -40,9 +36,8 @@ int main() {
    testList.remove(8);
 
    cout << "#After remove 8, : size= " << testList.size()
-        << ", traverseCount=" << testList.getTraverseCount() << endl;
+        << ", " << endl;
    ;
-   cout << "traverse count=" << testList.getTraverseCount() << endl;
 
    dumpcopy<>(testList);
 
@@ -50,7 +45,7 @@ int main() {
    cout << "testList.contains(8)=" << testList.contains(8) << endl;
 
    cout << "# members, after access 8: size= " << testList.size()
-        << ", traverseCount=" << testList.getTraverseCount() << endl;
+        << ", " << endl;
    ;
 
    dumpcopy<>(testList);
@@ -58,7 +53,7 @@ int main() {
    cout << "testList.contains(7)=" << testList.contains(7) << endl;
 
    cout << "# members, after access 7: size= " << testList.size()
-        << ", traverseCount=" << testList.getTraverseCount() << endl;
+        << ", " << endl;
 
    dumpcopy<>(testList);
 

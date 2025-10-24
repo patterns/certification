@@ -11,7 +11,6 @@
 const int NODE_HEAD = -99;         // the dummy item of the head node
 const int NODE_UNDEFINED = -100;   // general node error (e.g., nonexistent)
 const int ERROR_INDEX = -101;      // invalid index (parameter to retrieve)
-const bool ADD_MODE_FRONT = true;  // add new nodes to front or tail
 
 //---------------------------------------------------------------------------
 // SortedList:  circular double linked list composed of 'DListNode' nodes.
@@ -21,9 +20,8 @@ const bool ADD_MODE_FRONT = true;  // add new nodes to front or tail
 // Implementation and assumptions:
 //   -- To
 //   --
-//   -- The add operation
 //   -- The beginning of the list is marked by the 'header_' attribute.
-//   -- header_ is a pointer to a dummy 'DListNode' with the tail node
+//   -- header_ is a pointer to a dummy 'SListNode' with the tail node
 //      linked by the previous pointer.
 template <typename Object>
 class SortedList {
@@ -33,13 +31,13 @@ public:
    ~SortedList();  // the destructor
    int size() const;
    bool empty() const;
-   bool add(Object);
+   bool insert(Object);
    bool remove(Object);
    void clear();
    virtual bool contains(Object);
-   int getTraverseCount() const;
+   int indexMax() const;
 
-   void resetTraverseCount();
+
    SortedList<Object> &operator=(const SortedList<Object> &);  // assignment-copy
 
    template <typename T>
@@ -48,13 +46,13 @@ public:
 
 private:
    SListNode<Object> *header;
-   int traverseCount_;
+
    int length_;
    SListNode<Object> *tailNode();
    SListNode<Object> *zeroNode() const;
    void deleteNode(SListNode<Object> *);
    int elementIndex(Object);
-   void traversePlus(int);
+
    bool isHeadNode(SListNode<Object> *) const;
    bool elementMatch(SListNode<Object> *, Object) const;
 };

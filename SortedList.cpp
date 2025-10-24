@@ -6,11 +6,8 @@
 template <typename T>
 SortedList<T>::SortedList() : length_(0) {
    SListNode<T> *dummy = new SListNode<T>(HeadNode, true);
-   dummy->next_ = nullptr;
-   dummy->prev_ = nullptr;
    header = dummy;
-   ////length_ = 0;
-   traverseCount_ = 0;
+   ////traverseCount_ = 0;
 }
 
 // List deconstructor
@@ -24,9 +21,11 @@ SortedList<T>::~SortedList() {
 // (implement pass and return by value)
 template <typename T>
 SortedList<T>::SortedList(const SortedList<T> &rhs) {
-   header = rhs.header->clone(rhs.length_);
+   // TODO sanity check on rhs param
+
+   header = rhs.header->clone(rhs.indexMax());    // TODO I think we can refactor index MAX away by making the loop halt on tail-end
    length_ = rhs.length_;
-   traverseCount_ = rhs.traverseCount_;
+   ////traverseCount_ = rhs.traverseCount_;
 }
 
 // List head identity
@@ -42,59 +41,65 @@ bool SortedList<T>::elementMatch(SListNode<T> *n, T elem) const {
 }
 
 // node creation
-// Requirement states "add to front".
-// The traverse count is expected to be updated. Which can be achieved
-// via an internal call to contains() or another method that concentrates
-// traversals. The internal call benefits overridden versions because
-// the count will be managed already.
 template <typename T>
-bool SortedList<T>::add(T elem) {
-   if (elem < 0) {
-      return false;  // forbid negative values
-   }
-
-   if (contains(elem)) {
-      return true;  // duplicates are ignored according to requirement
-   }
-
-   SListNode<T> *newNode = new SListNode<T>(elem);
+bool SortedList<T>::insert(T elem) {
 
    switch (length_) {
       case 0: {  // the empty list
-         // the head node's next/prev began as nullptr,
-         // and new node's prev will point to the head
+         SListNode<T> *newNode = new SListNode<T>(elem);
          newNode->initialize(elem, header, header);
          header->next_ = newNode;
          header->prev_ = newNode;
          break;
       }
-      case 1: {                 // single node
-         if (ADD_MODE_FRONT) {  // new nodes are added to the front
-            SListNode<T> *n0 = zeroNode();
-            newNode->initialize(elem, header, n0);
-            n0->prev_ = newNode;
-            header->next_ = newNode;
 
-         } else {  // we add the new node by attaching to the tail
-            SListNode<T> *n0 = zeroNode();
-            newNode->initialize(elem, n0, header);
-            n0->next_ = newNode;
-            header->prev_ = newNode;
-         }
+      case 1: {                 // single node
+         SListNode<T> *newNode = new SListNode<T>(elem);
+         SListNode<T> *n0 = zeroNode();
+         newNode->initialize(elem, n0, header);
+         n0->next_ = newNode;
+         header->prev_ = newNode;
          break;
       }
-      default: {
-         if (ADD_MODE_FRONT) {  // new nodes are added to the front
-            SListNode<T> *n0 = zeroNode();
-            newNode->initialize(elem, header, n0);
-            n0->prev_ = newNode;
-            header->next_ = newNode;
 
-         } else {  // we add the new node by attaching to the tail
+      default: {
+
+         int max = indexMax();
+         if (max < length_) {
+            // TODO length_ can be >1 AND still only be single node if duplicates exist!
+            break;
+         }
+
+         // find the first list item that is greater/eq (>=) than insert-elem
+         SListNode<T> *visit = zeroNode();    // start at position zero node
+
+         while (!isHeadNode(visit)) {
+            T val = visit->element();
+            if (val == elem) {    // duplicate already exists
+               visit->counterPlus();    // increment the occurance counter
+               length_++;
+               return true;             // exit before creating new node
+            } else if (val > elem) {    // found location for insert
+               break;
+            }
+
+            visit = visit->child();
+         }
+
+         SListNode<T> *newNode = new SListNode<T>(elem);
+         if (isHeadNode(visit)) {    // looped entire list, so insert-elem is largest value
+            // attach to tail end
             SListNode<T> *tn = tailNode();
             newNode->initialize(elem, tn, header);
             tn->next_ = newNode;
             header->prev_ = newNode;
+
+         } else {
+            // attach in front of cursor (visit)
+            SListNode<T> *parent = visit->parent();
+            newNode->initialize(elem, parent, visit);
+            parent->next_ = newNode;
+            visit->prev_ = newNode;
          }
       }
    }
@@ -114,12 +119,12 @@ bool SortedList<T>::remove(T elem) {
       return false;
    }
 
-   int total = 0;
+   ////int total = 0;
    SListNode<T> *visit = zeroNode();  // position cursor to zero node
 
    for (int i = 0; i < index; i++) {
       visit = visit->child();  // position cursor to child node
-      total++;                 // track traversal/visits
+      ////total++;                 // track traversal/visits
    }
 
    deleteNode(visit);  // release node resources
@@ -148,7 +153,7 @@ void SortedList<T>::clear() {
    }
 
    length_ = 0;
-   resetTraverseCount();
+   ////resetTraverseCount();
    header->prev_ = nullptr;
    header->next_ = nullptr;
 }
@@ -176,7 +181,7 @@ int SortedList<T>::elementIndex(T elem) {
       return NODE_UNDEFINED;
    }
    int index = 0;
-   int total = 0;
+   ////int total = 0;
    SListNode<T> *visit = zeroNode();  // position cursor to zero node
 
    while (!isHeadNode(visit)) {
@@ -184,11 +189,11 @@ int SortedList<T>::elementIndex(T elem) {
          break;  // found a matching element
       }
       visit = visit->child();  // position cursor to child node
-      total++;                 // track traversal/visits
+      ////total++;                 // track traversal/visits
       index++;                 // increment node index
    }
 
-   traversePlus(total);  // store traversals
+   ////traversePlus(total);  // store traversals
 
    if (isHeadNode(visit)) {
       // we looped through whole list, but no match
@@ -197,7 +202,7 @@ int SortedList<T>::elementIndex(T elem) {
 
    return index;
 }
-
+/************
 // Traverse count getter
 template <typename T>
 int SortedList<T>::getTraverseCount() const {
@@ -208,7 +213,7 @@ int SortedList<T>::getTraverseCount() const {
 template <typename T>
 void SortedList<T>::resetTraverseCount() {
    traverseCount_ = 0;
-}
+}***********/
 
 // Assignment operator
 template <typename T>
@@ -219,12 +224,13 @@ SortedList<T> &SortedList<T>::operator=(const SortedList<T> &right) {
    }
 
    length_ = right.length_;
-   traverseCount_ = right.traverseCount_;
+   ////traverseCount_ = right.traverseCount_;
    header = right.header->clone(right.length_);
    return *this;
 }
 
 // Index operator
+// TODO calculation needed because we allow duplicates so the list _length_ can be greater than the physical nodes count.
 template <typename T>
 T SortedList<T>::operator[](const int index) const {
    if (empty() || index < 0) {
@@ -236,17 +242,17 @@ T SortedList<T>::operator[](const int index) const {
       return safeNull<T>();
    }
 
-   int total = 0;
+   int position = 0;
    SListNode<T> *visit = zeroNode();  // position cursor to zero node
 
    while (!isHeadNode(visit)) {
-      if (index == total) {
+      if (index == position) {
          // arrived at the node for specified index
          break;
       }
 
       visit = visit->child();  // position cursor to child node
-      total++;                 // track traversal/visits
+      position++;                 // TODO should increment by node's duplicateTotal
    }
 
    ////traversePlus(total);  // store traversals
@@ -258,12 +264,12 @@ T SortedList<T>::operator[](const int index) const {
 
    return visit->element();
 }
-
+/*************
 // Traverse count mathematical addition
 template <typename T>
 void SortedList<T>::traversePlus(int val) {
    traverseCount_ += val;
-}
+}*********/
 
 // head node's prev pointer always indicates the tail node
 template <typename T>
@@ -277,10 +283,28 @@ SListNode<T> *SortedList<T>::zeroNode() const {
    return header->next_;
 }
 
-// size returns the node count (length)
+// size is the effective length
 template <typename T>
 int SortedList<T>::size() const {
+   // To clarify, the effective length can be greater than the physical node count.
    return length_;
+}
+
+template <typename T>
+int SortedList<T>::indexMax() const {
+   // physical nodes count
+
+   if (empty()) {
+      return 0;
+   }
+
+   int max = 0;
+   SListNode<T> *visit = zeroNode();
+   while (!isHeadNode(visit)) {
+      visit = visit->child();
+      max++;
+   }
+   return max;
 }
 
 // empty returns true when size is zero

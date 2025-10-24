@@ -5,20 +5,6 @@
 
 enum NodeType { HeadNode, ItemNode, ErrorNode };
 
-// helper to coerce to "NULL"
-template <typename T>
-T safeNull() {
-   if (!std::is_fundamental<T>()) {
-      return T();
-      // check for string type, and use C string to coerce
-      // if constexpr(std::is_same_v<decltype(T), std::string>)
-      // const char *nothing = nullptr;
-      // return T(nothing);
-      ////return NULL;
-   } else {
-      return T(NULL);
-   }
-}
 
 // nodes can be three kinds head, item, error
 template <typename T>
@@ -29,11 +15,13 @@ class SListNode {
       T item_;
       short int error_;
    };
+   int counter_;
 
 public:
    SListNode(NodeType, bool);
    SListNode(NodeType, short int);
    SListNode(T);
+   ~SListNode();
    SListNode *prev_;
    SListNode *next_;
 
@@ -44,6 +32,8 @@ public:
    bool isHeadNode() const;
    bool elementMatch(T elem) const;
    T element() const;
+   int counterTotal() const;
+   int counterPlus();
 };
 
 ////////////////////////////////////////////////
@@ -54,6 +44,9 @@ template <typename T>
 SListNode<T>::SListNode(NodeType nt, bool val) {
    ntype_ = HeadNode;
    hn_ = val;
+   counter_ = 0;
+   next_ = nullptr;
+   prev_ = nullptr;
 }
 
 // ctor error node
@@ -61,6 +54,7 @@ template <typename T>
 SListNode<T>::SListNode(NodeType nt, short int val) {
    ntype_ = ErrorNode;
    error_ = val;
+   counter_ = 0;
 }
 
 // ctor item node
@@ -68,6 +62,17 @@ template <typename T>
 SListNode<T>::SListNode(T elem) {
    ntype_ = ItemNode;
    item_ = elem;
+   counter_ = 1;
+}
+
+// destructor of node
+template <typename T>
+SListNode<T>::~SListNode() {
+/*
+   if (!std::is_trivially_destructable<T>::value) {
+      ~item_();
+   }
+*/
 }
 
 // node initialization (see TICPP, Bruce Eckel)
@@ -84,12 +89,12 @@ template <typename T>
 SListNode<T> *SListNode<T>::clone(const int length) const {
    // make the head copy
    SListNode *dummy = new SListNode<T>(HeadNode, true);
-   ////dummy->initialize(NODE_HEAD, nullptr, nullptr);
+
    dummy->ntype_ = HeadNode;
    dummy->next_ = nullptr;
    dummy->prev_ = nullptr;
 
-   if (ntype_ != HeadNode) {  // expect to be called by header node
+   if (!isHeadNode()) {  // expect to be called by header node
       return dummy;           // probably should throw exception here.....
    }
 
@@ -101,7 +106,7 @@ SListNode<T> *SListNode<T>::clone(const int length) const {
          SListNode<T> *tail = parent();
          if (tail->ntype_ == ItemNode) {
             SListNode<T> *newNode = new SListNode<T>(tail->item_);
-            ////newNode->ntype_ = ItemNode;
+
             newNode->item_ = tail->item_;  // copy item
             newNode->next_ = dummy;        // circular link from tail
             newNode->prev_ = dummy;        // link child to head
@@ -117,7 +122,6 @@ SListNode<T> *SListNode<T>::clone(const int length) const {
          SListNode<T> *visit = parent();
          SListNode<T> *newNode = new SListNode<T>(visit->item_);
 
-         ////newNode->ntype_ = ItemNode;
          newNode->item_ = visit->item_;  // copy tail
          newNode->next_ = dummy;         // link tail to head
          newNode->prev_ = nullptr;       // placeholder for parent to tail
@@ -130,7 +134,7 @@ SListNode<T> *SListNode<T>::clone(const int length) const {
          for (int i = 1; i < length; i++) {
             newNode = new SListNode<T>(visit->item_);
             bookmark->prev_ = newNode;  // link child to new parent
-            ////newNode->ntype_ = ItemNode;
+
             newNode->item_ = visit->item_;  // copy item
             newNode->next_ = bookmark;      // link parent to child
             newNode->prev_ = nullptr;       // placeholder (for new node)
@@ -164,11 +168,22 @@ bool SListNode<T>::elementMatch(T elem) const {
 // element val getter
 template <typename T>
 T SListNode<T>::element() const {
-   /*   if (ntype_ != ItemNode) {
-         return T();
-      }
-   */
+   if (ntype_ != ItemNode) {
+      return T();
+   }
+
    return item_;
+}
+
+// total items of same value inclusive
+template <typename T>
+int SListNode<T>::counterTotal() const {
+   return counter_;
+}
+
+template <typename T>
+int SListNode<T>::counterPlus() {
+   return counter_ += 1;
 }
 
 // next pointer getter
@@ -182,3 +197,22 @@ template <typename T>
 SListNode<T> *SListNode<T>::parent() const {
    return prev_;
 }
+
+////////////////////////////
+// non-member
+
+// helper to coerce to "NULL"
+template <typename T>
+T safeNull() {
+   if (!std::is_fundamental<T>()) {
+      return T();
+      // check for string type, and use C string to coerce
+      // if constexpr(std::is_same_v<decltype(T), std::string>)
+      // const char *nothing = nullptr;
+      // return T(nothing);
+      ////return NULL;
+   } else {
+      return T(NULL);
+   }
+}
+
