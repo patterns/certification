@@ -42,7 +42,6 @@ int main() {
    dumpcopy<>(testList);
 
    cout << endl;
-   cout << "testList.contains(8)=" << testList.contains(8) << endl;
 
    cout << "# members, after access 8: size= " << testList.size()
         << ", " << endl;
@@ -50,7 +49,6 @@ int main() {
 
    dumpcopy<>(testList);
 
-   cout << "testList.contains(7)=" << testList.contains(7) << endl;
 
    cout << "# members, after access 7: size= " << testList.size()
         << ", " << endl;

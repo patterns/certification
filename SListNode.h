@@ -1,10 +1,9 @@
 // SListNode.h; Hsin-ih Tu; 2025.10.20;
 // Declaration of list node
 
-#include <type_traits>
+#include "specials.h"
 
-enum NodeType { HeadNode, ItemNode, ErrorNode };
-
+enum NodeType { HeadNode, ItemNode, ErrorNode, FreeNode };
 
 // nodes can be three kinds head, item, error
 template <typename T>
@@ -26,10 +25,11 @@ public:
    SListNode *next_;
 
    void initialize(T elem, SListNode *prev, SListNode *next);
-   SListNode *clone(const int) const;
+   SListNode *clone() const;
    SListNode *child() const;
    SListNode *parent() const;
    bool isHeadNode() const;
+   bool isItemNode() const;
    bool elementMatch(T elem) const;
    T element() const;
    int counterTotal() const;
@@ -62,17 +62,31 @@ template <typename T>
 SListNode<T>::SListNode(T elem) {
    ntype_ = ItemNode;
    item_ = elem;
-   counter_ = 1;
+   counter_ = 0;
 }
 
 // destructor of node
 template <typename T>
 SListNode<T>::~SListNode() {
-/*
-   if (!std::is_trivially_destructable<T>::value) {
-      ~item_();
+   if (ntype_ == FreeNode) {
+      return;  // already in destroy stage
    }
-*/
+
+   if (ntype_ != ItemNode) {
+      return;  // no item data that requires freeing
+   }
+
+   ntype_ = FreeNode;  // mark node as being destroyed
+
+   if (!std::is_fundamental<T>()) {
+      ////std::string is = static_cast<std::string>(item_);
+      std::string is = resolveString(item_);
+      std::string empty;
+
+      is.clear();      // reset string
+      is.resize(0);    // shrink capacity
+      is.swap(empty);  // trigger destroy of internal buffer
+   }
 }
 
 // node initialization (see TICPP, Bruce Eckel)
@@ -85,67 +99,47 @@ void SListNode<T>::initialize(T elem, SListNode<T> *prev, SListNode<T> *next) {
 }
 
 // copy the nodes meant to be called by the header node
+// Big assumption, only item nodes are copied.
 template <typename T>
-SListNode<T> *SListNode<T>::clone(const int length) const {
+SListNode<T> *SListNode<T>::clone() const {
    // make the head copy
-   SListNode *dummy = new SListNode<T>(HeadNode, true);
-
-   dummy->ntype_ = HeadNode;
-   dummy->next_ = nullptr;
-   dummy->prev_ = nullptr;
+   SListNode<T> *dummy = new SListNode<T>(HeadNode, true);
 
    if (!isHeadNode()) {  // expect to be called by header node
-      return dummy;           // probably should throw exception here.....
+      return dummy;      // probably should throw exception here.....
    }
 
-   switch (length) {
-      case 0: {  // empty list
-         break;
-      }
-      case 1: {  // single node
-         SListNode<T> *tail = parent();
-         if (tail->ntype_ == ItemNode) {
-            SListNode<T> *newNode = new SListNode<T>(tail->item_);
-
-            newNode->item_ = tail->item_;  // copy item
-            newNode->next_ = dummy;        // circular link from tail
-            newNode->prev_ = dummy;        // link child to head
-            dummy->next_ = newNode;        // link head to child
-            dummy->prev_ = newNode;        // circular link to tail
-         }
-         break;
-      }
-      default: {
-         SListNode<T> *bookmark;
-
-         // make the node copies starting with tail (reverse)
-         SListNode<T> *visit = parent();
-         SListNode<T> *newNode = new SListNode<T>(visit->item_);
-
-         newNode->item_ = visit->item_;  // copy tail
-         newNode->next_ = dummy;         // link tail to head
-         newNode->prev_ = nullptr;       // placeholder for parent to tail
-         dummy->prev_ = newNode;         // link head to tail
-
-         bookmark = newNode;       // bookmark the child
-         visit = visit->parent();  // position cursor to the parent of tail
-
-         // non-tail nodes
-         for (int i = 1; i < length; i++) {
-            newNode = new SListNode<T>(visit->item_);
-            bookmark->prev_ = newNode;  // link child to new parent
-
-            newNode->item_ = visit->item_;  // copy item
-            newNode->next_ = bookmark;      // link parent to child
-            newNode->prev_ = nullptr;       // placeholder (for new node)
-            bookmark = newNode;             // bookmark the child
-            visit = visit->parent();        // decrement cursor
-         }
-
-         bookmark->prev_ = dummy;  // link zero node to head
-         dummy->next_ = newNode;   // link head to zero node
-      }
+   SListNode<T> *n0 = child();
+   if (n0 == nullptr) {  // empty list
+      return dummy;
    }
+
+   SListNode<T> *n1 = n0->child();
+   if (n1->ntype_ == HeadNode) {     // single node
+      if (n0->ntype_ == ItemNode) {  // we only care about items
+         SListNode<T> *newNode = new SListNode<T>(n0->item_);
+         newNode->next_ = dummy;  // circular link from tail
+         newNode->prev_ = dummy;  // link child to head
+         dummy->next_ = newNode;  // link head to child
+         dummy->prev_ = newNode;  // circular link to tail
+      }
+      return dummy;
+   }
+
+   SListNode<T> *bookmark = dummy;
+   SListNode<T> *visit = n0;
+
+   while (visit->ntype_ == ItemNode) {
+      SListNode *newNode = new SListNode<T>(visit->item_);
+      bookmark->next_ = newNode;  // link child to parent
+      newNode->prev_ = bookmark;  // link parent to child
+      newNode->next_ = nullptr;   // placeholder (for new node)
+      bookmark = newNode;         // bookmark the child
+      visit = visit->child();     // advance cursor
+   }
+
+   bookmark->next_ = dummy;  // link tail node to head
+   dummy->prev_ = bookmark;  // link head to tail node
 
    return dummy;
 }
@@ -154,6 +148,12 @@ SListNode<T> *SListNode<T>::clone(const int length) const {
 template <typename T>
 bool SListNode<T>::isHeadNode() const {
    return (ntype_ == HeadNode);
+}
+
+// check node type is item
+template <typename T>
+bool SListNode<T>::isItemNode() const {
+   return (ntype_ == ItemNode);
 }
 
 // check element val
@@ -197,22 +197,3 @@ template <typename T>
 SListNode<T> *SListNode<T>::parent() const {
    return prev_;
 }
-
-////////////////////////////
-// non-member
-
-// helper to coerce to "NULL"
-template <typename T>
-T safeNull() {
-   if (!std::is_fundamental<T>()) {
-      return T();
-      // check for string type, and use C string to coerce
-      // if constexpr(std::is_same_v<decltype(T), std::string>)
-      // const char *nothing = nullptr;
-      // return T(nothing);
-      ////return NULL;
-   } else {
-      return T(NULL);
-   }
-}
-
