@@ -26,12 +26,6 @@ SortedList<T>::SortedList(const SortedList<T> &rhs) {
    length_ = rhs.length_;
 }
 
-// List head identity
-template <typename T>
-bool SortedList<T>::isHeadNode(SListNode<T> *n) const {
-   return n->isHeadNode();
-}
-
 // Element identity
 template <typename T>
 bool SortedList<T>::elementMatch(SListNode<T> *n, T elem) const {
@@ -41,62 +35,62 @@ bool SortedList<T>::elementMatch(SListNode<T> *n, T elem) const {
 // node creation
 template <typename T>
 bool SortedList<T>::insert(T elem) {
-   int max = indexMax();
+   if (empty()) {  // empty list
+      SListNode<T> *newNode = new SListNode<T>(elem);
+      newNode->initialize(elem, header, header);
+      header->next_ = newNode;
+      header->prev_ = newNode;
+      length_++;
+      return true;
+   }
 
-   switch (max) {
-      case 0: {  // the empty list
-         SListNode<T> *newNode = new SListNode<T>(elem);
-         newNode->initialize(elem, header, header);
-         header->next_ = newNode;
-         header->prev_ = newNode;
+   SListNode<T> *n0 = zeroNode();
+   SListNode<T> *n1 = n0->child();
+   if (n1->isHeadNode()) {           // single node
+      if (elementMatch(n0, elem)) {  // node already exists
+         n0->counterPlus();          // increment duplicate counter
+         length_++;
+         return true;
+      }
+
+      // create new n1
+      n1 = new SListNode<T>(elem);
+      n1->initialize(elem, n0, header);
+      n0->next_ = n1;
+      header->prev_ = n1;
+      length_++;
+      return true;
+   }
+
+   // find the first list item that is greater/eq (>=) than insert-elem
+   SListNode<T> *visit = n0;  // start at position zero node
+
+   while (visit->isItemNode()) {
+      T val = visit->element();
+      if (val >= elem) {  // found location for insert
          break;
       }
 
-      case 1: {  // single node
-         // TODO duplicates can be inserted even in single node
-         // TODO length_ can be >1 AND still only be single node if duplicates exist!
+      visit = visit->child();
+   }
 
+   if (visit->isHeadNode()) {  // looped entire list, so insert-elem is largest value
+      // attach to tail end
+      SListNode<T> *newNode = new SListNode<T>(elem);
+      SListNode<T> *tn = tailNode();
+      newNode->initialize(elem, tn, header);
+      tn->next_ = newNode;
+      header->prev_ = newNode;
+   } else {
+      if (elementMatch(visit, elem)) {  // duplicate already exists
+         visit->counterPlus();          // increment the occurance counter
+      } else {
+         // attach in front of cursor (visit)
          SListNode<T> *newNode = new SListNode<T>(elem);
-         SListNode<T> *n0 = zeroNode();
-         newNode->initialize(elem, n0, header);
-         n0->next_ = newNode;
-         header->prev_ = newNode;
-         break;
-      }
-
-      default: {
-
-         // find the first list item that is greater/eq (>=) than insert-elem
-         SListNode<T> *visit = zeroNode();  // start at position zero node
-
-         while (visit->isItemNode()) {
-            T val = visit->element();
-            if (val == elem) {        // duplicate already exists
-               visit->counterPlus();  // increment the occurance counter
-               length_++;
-               return true;           // exit before creating new node
-            } else if (val > elem) {  // found location for insert
-               break;
-            }
-
-            visit = visit->child();
-         }
-
-         SListNode<T> *newNode = new SListNode<T>(elem);
-         if (isHeadNode(visit)) {  // looped entire list, so insert-elem is largest value
-            // attach to tail end
-            SListNode<T> *tn = tailNode();
-            newNode->initialize(elem, tn, header);
-            tn->next_ = newNode;
-            header->prev_ = newNode;
-
-         } else {
-            // attach in front of cursor (visit)
-            SListNode<T> *parent = visit->parent();
-            newNode->initialize(elem, parent, visit);
-            parent->next_ = newNode;
-            visit->prev_ = newNode;
-         }
+         SListNode<T> *parent = visit->parent();
+         newNode->initialize(elem, parent, visit);
+         parent->next_ = newNode;
+         visit->prev_ = newNode;
       }
    }
 
@@ -132,22 +126,16 @@ bool SortedList<T>::remove(T elem) {
 // remove nodes starting at tail end
 template <typename T>
 void SortedList<T>::clear() {
-   int max = indexMax();
-   switch (max) {
-      case 0: {
-         return;
-      }
-      case 1: {
-         deleteNode(zeroNode());
-         break;
-      }
-      default: {
-         SListNode<T> *tn = tailNode();
-         while (!isHeadNode(tn)) {
-            deleteNode(tn);
-            tn = tailNode();
-         }
-      }
+   if (empty()) {
+      return;
+   }
+
+   SListNode<T> *tmp;
+   SListNode<T> *n = zeroNode();  // start with zero node
+   while (n->isItemNode()) {
+      tmp = n;          // bookmark the node
+      n = n->child();   // advance cursor
+      deleteNode(tmp);  // free node
    }
 
    length_ = 0;
@@ -175,7 +163,7 @@ int SortedList<T>::elementIndex(T elem) {
       index++;                 // increment node index
    }
 
-   if (isHeadNode(visit)) {
+   if (visit->isHeadNode()) {
       // we looped through whole list, but no match
       return NODE_UNDEFINED;
    }
@@ -229,7 +217,7 @@ T SortedList<T>::operator[](const int index) const {
       position++;              // TODO should increment by node's duplicateTotal
    }
 
-   if (isHeadNode(visit)) {
+   if (visit->isHeadNode()) {
       // we looped through whole list, but no match
       return safeNull<T>();
    }
@@ -256,41 +244,34 @@ int SortedList<T>::size() const {
    return length_;
 }
 
-// empty returns true when size is zero
+// empty returns true when zero-length list
 template <typename T>
 bool SortedList<T>::empty() const {
    return (length_ == 0);
 }
 
-// delete a list node and free resources
-// for use by the clear() method, and the contains() in the overridden versions to achieve swapping.
+// delete a list node
+// for internal use by the clear() method (so fewer sanity checks)
 // Accepts the pointer to the target node as parameter.
 template <typename T>
 void SortedList<T>::deleteNode(SListNode<T> *node) {
-   switch (length_) {
-      case 0: {
-         // empty list, unreachable?
-         return;
-      }
-      case 1: {
-         // single node list
-         header->next_ = nullptr;
-         header->prev_ = nullptr;
-         break;
-      }
-      default: {
-         // first detach (make into orphan)
-         SListNode<T> *parent = node->prev_;
-         node->next_->prev_ = parent;
-         parent->next_ = node->next_;
-      }
+   // first detach (make into orphan)
+   SListNode<T> *parent = node->parent();
+   SListNode<T> *child = node->child();
+
+   if (parent->isHeadNode() && child->isHeadNode()) {  // single node list
+      header->next_ = nullptr;
+      header->prev_ = nullptr;
+   } else {
+      child->prev_ = parent;
+      parent->next_ = child;
    }
 
    node->next_ = nullptr;
    node->prev_ = nullptr;
    delete node;
 }
-
+/*
 // TODO refactor this away? if while loops can always locate head now
 template <typename T>
 int SortedList<T>::indexMax() const {
@@ -307,7 +288,7 @@ int SortedList<T>::indexMax() const {
       max++;
    }
    return max;
-}
+}*/
 
 ////////////////////////////////////////////////
 // Non-member overloads
@@ -316,8 +297,8 @@ int SortedList<T>::indexMax() const {
 // Print stream operator (see example from TICPP p.738)
 template <typename T>
 std::ostream &operator<<(std::ostream &os, const SortedList<T> &right) {
-   if (right.empty()) {   // is empty line expected for empty list?
-      os << std::endl;
+   if (right.empty()) {  // would "{EMPTY}" be too confusing?
+      os << "" << std::endl;
       return os;
    }
 
@@ -326,7 +307,7 @@ std::ostream &operator<<(std::ostream &os, const SortedList<T> &right) {
    while (visit->isItemNode()) {
       int dups = 1 + visit->counterTotal();
       T el = visit->element();
-      for (int i=0; i < dups; i++) {
+      for (int i = 0; i < dups; i++) {
          os << el << ", ";
       }
       visit = visit->child();

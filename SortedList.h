@@ -46,9 +46,8 @@ private:
    SListNode<Object> *zeroNode() const;
    void deleteNode(SListNode<Object> *);
    int elementIndex(Object);
-   bool isHeadNode(SListNode<Object> *) const;
+
    bool elementMatch(SListNode<Object> *, Object) const;
-   int indexMax() const;
 };
 
 #include "SortedList.cpp"
