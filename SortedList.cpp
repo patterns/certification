@@ -4,27 +4,53 @@
 
 // List constructor
 template <typename T>
-SortedList<T>::SortedList() : length_(0) {
-   SListNode<T> *dummy = new SListNode<T>(HeadNode, true);
-   header = dummy;
+SortedList<T>::SortedList():
+   length_(0),
+   destroying_(false),
+   header(new SListNode<T>(HeadNode, true)) {
 }
 
 // List deconstructor
 template <typename T>
 SortedList<T>::~SortedList() {
+   if (destroying_) {    // check whether already being destroyed
+      return;
+   }
+
+   destroying_ = true;    // set flag for destroy stage
    clear();
    delete header;
 }
 
 // List copy-constructor
-// (implement pass and return by value)
 template <typename T>
-SortedList<T>::SortedList(const SortedList<T> &rhs) {
-   // TODO sanity check on rhs param
-
-   header = rhs.header->clone();
-   length_ = rhs.length_;
+SortedList<T>::SortedList(const SortedList<T> &other):
+   length_(other.length_),
+   header(other.header->clone()) {
 }
+
+// Move-constructor
+template <typename T>
+SortedList<T>::SortedList(SortedList<T> &&other):
+   length_(0),
+   header(nullptr) {
+   // using our move assignment operator to achieve move constructor.
+   // See the tutorial
+   // https://learn.microsoft.com/en-us/cpp/cpp/move-constructors-and-move-assignment-operators-cpp?view=msvc-170
+   *this = std::move(other);
+}/*
+template <typename T>
+SortedList<T>::SortedList(SortedList<T> &&other):
+   length_(0),
+   header(new SListNode<T>(HeadNode, true)) {
+   length_ = other.length_;    // assign the length from the source obj
+   header = other.header;      // assign the head from the source obj
+
+   other.length_ = 0;          // zero-out the length in the source obj
+   other.header->next_ = nullptr; // default next in the source obj
+   other.header->prev_ = nullptr; // default prev in the source obj
+}
+*/
 
 // Element identity
 template <typename T>
@@ -123,7 +149,6 @@ bool SortedList<T>::remove(T elem) {
 }
 
 // List reset
-// remove nodes starting at tail end
 template <typename T>
 void SortedList<T>::clear() {
    if (empty()) {
@@ -144,7 +169,7 @@ void SortedList<T>::clear() {
 }
 
 // find the node index of the element specified
-// since locating the node by element is repeated, this may be reused.
+// TODO no longer reused, so change this to binary search?
 template <typename T>
 int SortedList<T>::elementIndex(T elem) {
    if (empty()) {
@@ -171,17 +196,38 @@ int SortedList<T>::elementIndex(T elem) {
    return index;
 }
 
-// Assignment operator
+// Assignment-copy operator
 template <typename T>
 SortedList<T> &SortedList<T>::operator=(const SortedList<T> &right) {
-   // check for self-assignment
-   if (this == &right) {
+   if (this == &right) {    // check for self-assignment
       return *this;
    }
 
-   length_ = right.length_;
+   clear();    // Free existing nodes.
+   delete header;    // Free exisitng head.
 
+   length_ = right.length_;
    header = right.header->clone();
+
+   return *this;
+}
+
+// Assignment-move operator
+template <typename T>
+SortedList<T> &SortedList<T>::operator=(SortedList<T> &&other) {
+   if (this == &other) {    // check for self-assignment
+      return *this;
+   }
+
+   clear();    // Free existing nodes.
+   delete header;    // Free existing head.
+
+   length_ = other.length_;
+   header = other.header;    // Move the head from the source obj.
+
+   other.length_ = 0;
+   other.header = nullptr;    // Release the pointer from the source obj.
+
    return *this;
 }
 

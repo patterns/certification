@@ -5,10 +5,8 @@
 #define SORTEDLIST_H
 
 #include <iostream>
-
 #include "SListNode.h"
 
-const int NODE_HEAD = -99;        // the dummy item of the head node
 const int NODE_UNDEFINED = -100;  // general node error (e.g., nonexistent)
 const int ERROR_INDEX = -101;     // invalid index (parameter to retrieve)
 
@@ -27,7 +25,8 @@ template <typename Object>
 class SortedList {
 public:
    SortedList();  // the constructor
-   SortedList(const SortedList<Object> &);
+   SortedList(const SortedList<Object> &);     // copy-constructor
+   SortedList(SortedList<Object> &&);    // move-constructor
    ~SortedList();  // the destructor
    int size() const;
    bool empty() const;
@@ -35,13 +34,16 @@ public:
    bool remove(Object);
    void clear();
    SortedList<Object> &operator=(const SortedList<Object> &);  // assignment-copy
-   Object operator[](const int) const;                         // index access
+   SortedList<Object> &operator=(SortedList<Object> &&);       // assignment-move
+   Object operator[](const int) const;                         // index access operator
+   ////Object &operator+(const SortedList<Object> &) const;        // append operator
    template <typename T>
    friend std::ostream &operator<<(std::ostream &, const SortedList<T> &);  // print stream
 
 private:
    SListNode<Object> *header;
    int length_;
+   bool destroying_;
    SListNode<Object> *tailNode();
    SListNode<Object> *zeroNode() const;
    void deleteNode(SListNode<Object> *);

@@ -18,6 +18,8 @@ add_executable(search_test
   superclass_test.cc
   index_test.cc
   string_test.cc
+  uint_test.cc
+  charstar_test.cc
 )
 include_directories (search_test ..)
 target_link_libraries(search_test

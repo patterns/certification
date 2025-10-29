@@ -2,17 +2,18 @@
 
 #include "SortedList.h"
 
-// List behavior
-TEST(SortedListTest, empty_list) {
-   SortedList<int> ls;
+// TODO char is a fundamental builtin type but causes issues, do we need to make specializations of the template class??
+// List of char 
+TEST(SortedListTest, chstar_empty_list) {
+   SortedList<char> ls;
 
    // empty list
    EXPECT_EQ(ls.empty(), true);
    EXPECT_EQ(ls.size(), 0);
 }
 
-TEST(SortedListTest, node_creation) {
-   SortedList<int> ls;
+TEST(SortedListTest, uint_node_creation) {
+   SortedList<unsigned int> ls;
 
    bool added = ls.insert(55);
 
@@ -39,8 +40,8 @@ TEST(SortedListTest, node_creation) {
    EXPECT_EQ(ls[2], 77);
 }
 
-TEST(SortedListTest, list_reset) {
-   SortedList<int> ls;
+TEST(SortedListTest, uint_list_reset) {
+   SortedList<unsigned int> ls;
 
    bool added = ls.insert(55);
 
@@ -51,8 +52,8 @@ TEST(SortedListTest, list_reset) {
    EXPECT_EQ(ls.empty(), true);
 }
 
-TEST(SortedListTest, node_deletion) {
-   SortedList<int> ls;
+TEST(SortedListTest, uint_node_deletion) {
+   SortedList<unsigned int> ls;
    bool added = ls.insert(55);
 
    EXPECT_EQ(added, true);
@@ -82,14 +83,14 @@ TEST(SortedListTest, node_deletion) {
    EXPECT_EQ(ls.size(), 3);
 }
 
-TEST(SortedListTest, move_assignment) {
-   SortedList<int> l1;
+TEST(SortedListTest, uint_move_assignment) {
+   SortedList<unsigned int> l1;
    l1.insert(55);
    l1.insert(77);
    l1.insert(22);
    EXPECT_EQ(l1.size(), 3);
 
-   SortedList<int> l2;
+   SortedList<unsigned int> l2;
    l2.insert(9);
    l2.insert(8);
    l2.insert(7);
@@ -107,14 +108,14 @@ TEST(SortedListTest, move_assignment) {
    EXPECT_EQ(l2[2], 77);
 }
 
-TEST(SortedListTest, copy_assignment) {
-   SortedList<int> l1;
+TEST(SortedListTest, uint_copy_assignment) {
+   SortedList<unsigned int> l1;
    l1.insert(55);
    l1.insert(77);
    l1.insert(22);
    EXPECT_EQ(l1.size(), 3);
 
-   SortedList<int> l2;
+   SortedList<unsigned int> l2;
    l2.insert(9);
    l2.insert(8);
    l2.insert(7);
@@ -135,15 +136,15 @@ TEST(SortedListTest, copy_assignment) {
    EXPECT_EQ(l2[2], 77);
 }
 
-TEST(SortedListTest, move_constructor) {
-   SortedList<int> l1;
+TEST(SortedListTest, uint_move_constructor) {
+   SortedList<unsigned int> l1;
    l1.insert(55);
    l1.insert(77);
    l1.insert(22);
    EXPECT_EQ(l1.size(), 3);
 
    // constructor forcing the move (l1 to l2)
-   SortedList<int> l2(std::move(l1));
+   SortedList<unsigned int> l2(std::move(l1));
 
    EXPECT_EQ(l1.empty(), true);
    EXPECT_EQ(l1.size(), 0);
@@ -153,15 +154,15 @@ TEST(SortedListTest, move_constructor) {
    EXPECT_EQ(l2[2], 77);
 }
 
-TEST(SortedListTest, copy_constructor) {
-   SortedList<int> l1;
+TEST(SortedListTest, uint_copy_constructor) {
+   SortedList<unsigned int> l1;
    l1.insert(55);
    l1.insert(77);
    l1.insert(22);
    EXPECT_EQ(l1.size(), 3);
 
    // constructor (l2 is copy of l1)
-   SortedList<int> l2(l1);
+   SortedList<unsigned int> l2(l1);
 
    EXPECT_EQ(l1.empty(), false);
    EXPECT_EQ(l1.size(), 3);
