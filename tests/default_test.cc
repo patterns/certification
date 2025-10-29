@@ -20,20 +20,47 @@ TEST(SortedListTest, list_append) {
    // merge lists
    SortedList<int> l3 = l1 + l2;
 
-   ////EXPECT_EQ(l3.size(), 6);
-   EXPECT_EQ(l3.size(), 3);
+   EXPECT_EQ(l3.size(), 6);
    EXPECT_EQ(l3[0], 3);
    EXPECT_EQ(l3[1], 5);
    EXPECT_EQ(l3[2], 9);
+   EXPECT_EQ(l3[3], 22);
+   EXPECT_EQ(l3[5], 88);
 
 }
+
 TEST(SortedListTest, list_equals) {
-   //TODO equals operator
+   SortedList<int> lx;
+   SortedList<int> ly;
+
    SortedList<int> l1;
    l1.insert(55);
    l1.insert(77);
    l1.insert(22);
-   EXPECT_EQ(l1.size(), 3);
+
+   SortedList<int> l2;
+   l2.insert(55);
+   l2.insert(77);
+   l2.insert(22);
+
+   SortedList<int> l3;
+   l3.insert(77);
+   l3.insert(99);
+   l3.insert(22);
+
+   // call equals operator
+   bool match = (l1 == l2);
+   EXPECT_EQ(match, true);
+
+   bool ident = (l2 == l2);
+   EXPECT_EQ(ident, true);
+
+   bool miss = (l1 == l3);
+   EXPECT_EQ(miss, false);
+
+   bool empty = (lx == ly);
+   EXPECT_EQ(empty, true);
+
 }
 
 // List behavior

@@ -12,12 +12,10 @@ const int ERROR_INDEX = -101;     // invalid index (parameter to retrieve)
 
 //---------------------------------------------------------------------------
 // SortedList:  circular double linked list composed of 'SListNode' nodes.
-//
-//
+//   Each list node has the data stored as the item attribute.
 //
 // Implementation and assumptions:
-//   -- To
-//   --
+//   -- Assumption is that duplicate items are allowed.
 //   -- The beginning of the list is marked by the 'header_' attribute.
 //   -- header_ is a pointer to a dummy 'SListNode' with the tail node
 //      linked by the previous pointer.
@@ -36,8 +34,8 @@ public:
    SortedList<Object> &operator=(const SortedList<Object> &);  // assignment-copy
    SortedList<Object> &operator=(SortedList<Object> &&);       // assignment-move
    Object operator[](const int) const;                         // index access operator
-   SortedList<Object> operator+(const SortedList<Object> &);  // append operator
-   ////Object &operator==(const SortedList<Object> &) const;        // equals operator
+   SortedList<Object> operator+(const SortedList<Object> &);   // append operator
+   bool operator==(const SortedList<Object> &) const;         // equals operator
    template <typename T>
    friend std::ostream &operator<<(std::ostream &, const SortedList<T> &);  // print stream
 

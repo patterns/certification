@@ -2,8 +2,69 @@
 
 #include "SortedList.h"
 
-// List of unsigned int
-TEST(SortedListTest, uint_empty_list) {
+TEST(SortedListTest, uint_list_append) {
+   // first list
+   SortedList<unsigned int> l1;
+   l1.insert(44);
+   l1.insert(88);
+   l1.insert(22);
+   EXPECT_EQ(l1.size(), 3);
+
+   // second list
+   SortedList<unsigned int> l2;
+   l2.insert(5);
+   l2.insert(9);
+   l2.insert(3);
+   EXPECT_EQ(l2.size(), 3);
+
+   // merge lists
+   SortedList<unsigned int> l3 = l1 + l2;
+
+   EXPECT_EQ(l3.size(), 6);
+   EXPECT_EQ(l3[0], 3);
+   EXPECT_EQ(l3[1], 5);
+   EXPECT_EQ(l3[2], 9);
+   EXPECT_EQ(l3[3], 22);
+   EXPECT_EQ(l3[5], 88);
+
+}
+
+TEST(SortedListTest, uint_list_equals) {
+   SortedList<unsigned int> lx;
+   SortedList<unsigned int> ly;
+
+   SortedList<unsigned int> l1;
+   l1.insert(55);
+   l1.insert(77);
+   l1.insert(22);
+
+   SortedList<unsigned int> l2;
+   l2.insert(55);
+   l2.insert(77);
+   l2.insert(22);
+
+   SortedList<unsigned int> l3;
+   l3.insert(77);
+   l3.insert(99);
+   l3.insert(22);
+
+   // call equals operator
+   bool match = (l1 == l2);
+   EXPECT_EQ(match, true);
+
+   bool ident = (l2 == l2);
+   EXPECT_EQ(ident, true);
+
+   bool miss = (l1 == l3);
+   EXPECT_EQ(miss, false);
+
+   bool empty = (lx == ly);
+   EXPECT_EQ(empty, true);
+
+}
+
+// List behavior
+TEST(SortedListTest, uint_list_empty) {
    SortedList<unsigned int> ls;
 
    // empty list
@@ -37,6 +98,48 @@ TEST(SortedListTest, uint_node_creation) {
    EXPECT_EQ(added, true);
    EXPECT_EQ(ls.size(), 4);
    EXPECT_EQ(ls[2], 77);
+
+   // second list
+   SortedList<unsigned int> l2;
+   l2.insert(5);
+   l2.insert(9);
+   l2.insert(3);
+   EXPECT_EQ(l2.size(), 3);
+   EXPECT_EQ(l2[0], 3);
+   EXPECT_EQ(l2[1], 5);
+   EXPECT_EQ(l2[2], 9);
+   // third list
+   SortedList<unsigned int> l3;
+   l3.insert(9);
+   l3.insert(5);
+   l3.insert(3);
+   EXPECT_EQ(l3.size(), 3);
+   EXPECT_EQ(l3[0], 3);
+   EXPECT_EQ(l3[1], 5);
+   EXPECT_EQ(l3[2], 9);
+   // fourth list
+   SortedList<unsigned int> l4;
+   l4.insert(5);
+   l4.insert(3);
+   l4.insert(9);
+   EXPECT_EQ(l4.size(), 3);
+   EXPECT_EQ(l4[0], 3);
+   EXPECT_EQ(l4[1], 5);
+   EXPECT_EQ(l4[2], 9);
+
+   SortedList<unsigned int> l5;
+   l5.insert(3);
+   l5.insert(9);
+   EXPECT_EQ(l5.size(), 2);
+   EXPECT_EQ(l5[0], 3);
+   EXPECT_EQ(l5[1], 9);
+
+   SortedList<unsigned int> l6;
+   l6.insert(9);
+   l6.insert(3);
+   EXPECT_EQ(l6.size(), 2);
+   EXPECT_EQ(l6[0], 3);
+   EXPECT_EQ(l6[1], 9);
 }
 
 TEST(SortedListTest, uint_list_reset) {

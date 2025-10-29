@@ -53,29 +53,6 @@ bool SortedList<T>::insert(T elem) {
    }
 
    SListNode<T> *n0 = zeroNode();
-/***************************
-   if (!n0->child()->isItemNode()) {    // single node case
-      if (n0->elementMatch(elem)) {     // dup exists
-         n0->counterPlus();
-         length_++;
-         return true;
-      } else if (n0->element() < elem) {    // insert-elem is larger value
-         SListNode<T> *newNode = new SListNode<T>(elem);
-         newNode->initialize(elem, n0, header);
-         n0->next_ = newNode;
-         header->prev_ = newNode;
-         length_++;
-         return true;
-      } else {    // insert-elem is new zero position
-         SListNode<T> *newNode = new SListNode<T>(elem);
-         newNode->initialize(elem, header, n0);
-         n0->prev_ = newNode;
-         header->next_ = newNode;
-         length_++;
-         return true;
-      }
-   }
-**********************/
 
    // find the first list item that is greater/eq (>=) than insert-elem
    SListNode<T> *visit = n0;  // start at position zero node
@@ -276,16 +253,47 @@ SortedList<T> SortedList<T>::operator+(const SortedList<T> &other) {
       return SortedList<T>(*this);
    }
 
-/*
-   SortedList<T> lv(other);
+   SortedList<T> lv(other);    // copy l2
 
-   SListNode<T> *visit = zeroNode();
+   SListNode<T> *visit = zeroNode();    // start cursor at l1's zero node
 
    while (visit->isItemNode()) {
-      lv.insert(visit->element());
+      lv.insert(visit->element());    // insert item from l1 into temp list
+      visit = visit->child();
    }
-*/
-   return SortedList<T>(other);    // return a copy of the (local) list result
+
+   return SortedList<T>(lv);    // return a copy of the (local) list result
+}
+
+// List equals operator
+template <typename T>
+bool SortedList<T>::operator==(const SortedList<T> &other) const {
+   if (this == &other) {    // check for identity
+      return true;
+   }
+
+   if (empty() && other.empty()) {    // check for empty identity
+      return true;
+   }
+
+   if (length_ != other.length_) {    // both must be same size
+      return false;
+   }
+
+   SListNode<T> *curr = zeroNode();
+   SListNode<T> *visit = other.zeroNode();
+
+   while (visit->isItemNode() && curr->isItemNode()) {
+      T el = curr->element();
+      if (!visit->elementMatch(el)) {    // both items must be equal
+         return false;
+      }
+
+      curr = curr->child();
+      visit = visit->child();
+   }
+
+   return true;
 }
 
 // head node's prev pointer always indicates the tail node

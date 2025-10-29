@@ -15,7 +15,7 @@ set(gtest_force_shared_crt ON CACHE BOOL "" FORCE)
 FetchContent_MakeAvailable(googletest)
 
 add_executable(search_test
-  superclass_test.cc
+  default_test.cc
   index_test.cc
   string_test.cc
   uint_test.cc
