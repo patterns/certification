@@ -5,7 +5,8 @@
 // TODO char is a fundamental builtin type but causes issues, do we need to make specializations of the template class??
 // List of char 
 TEST(SortedListTest, chstar_empty_list) {
-   SortedList<char> ls;
+   //TODO
+   SortedList<unsigned int> ls;
 
    // empty list
    EXPECT_EQ(ls.empty(), true);

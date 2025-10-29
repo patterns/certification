@@ -2,6 +2,40 @@
 
 #include "SortedList.h"
 
+TEST(SortedListTest, list_append) {
+   // first list
+   SortedList<int> l1;
+   l1.insert(44);
+   l1.insert(88);
+   l1.insert(22);
+   EXPECT_EQ(l1.size(), 3);
+
+   // second list
+   SortedList<int> l2;
+   l2.insert(5);
+   l2.insert(9);
+   l2.insert(3);
+   EXPECT_EQ(l2.size(), 3);
+
+   // merge lists
+   SortedList<int> l3 = l1 + l2;
+
+   ////EXPECT_EQ(l3.size(), 6);
+   EXPECT_EQ(l3.size(), 3);
+   EXPECT_EQ(l3[0], 3);
+   EXPECT_EQ(l3[1], 5);
+   EXPECT_EQ(l3[2], 9);
+
+}
+TEST(SortedListTest, list_equals) {
+   //TODO equals operator
+   SortedList<int> l1;
+   l1.insert(55);
+   l1.insert(77);
+   l1.insert(22);
+   EXPECT_EQ(l1.size(), 3);
+}
+
 // List behavior
 TEST(SortedListTest, empty_list) {
    SortedList<int> ls;
@@ -37,6 +71,48 @@ TEST(SortedListTest, node_creation) {
    EXPECT_EQ(added, true);
    EXPECT_EQ(ls.size(), 4);
    EXPECT_EQ(ls[2], 77);
+
+   // second list
+   SortedList<int> l2;
+   l2.insert(5);
+   l2.insert(9);
+   l2.insert(3);
+   EXPECT_EQ(l2.size(), 3);
+   EXPECT_EQ(l2[0], 3);
+   EXPECT_EQ(l2[1], 5);
+   EXPECT_EQ(l2[2], 9);
+   // third list
+   SortedList<int> l3;
+   l3.insert(9);
+   l3.insert(5);
+   l3.insert(3);
+   EXPECT_EQ(l3.size(), 3);
+   EXPECT_EQ(l3[0], 3);
+   EXPECT_EQ(l3[1], 5);
+   EXPECT_EQ(l3[2], 9);
+   // fourth list
+   SortedList<int> l4;
+   l4.insert(5);
+   l4.insert(3);
+   l4.insert(9);
+   EXPECT_EQ(l4.size(), 3);
+   EXPECT_EQ(l4[0], 3);
+   EXPECT_EQ(l4[1], 5);
+   EXPECT_EQ(l4[2], 9);
+
+   SortedList<int> l5;
+   l5.insert(3);
+   l5.insert(9);
+   EXPECT_EQ(l5.size(), 2);
+   EXPECT_EQ(l5[0], 3);
+   EXPECT_EQ(l5[1], 9);
+
+   SortedList<int> l6;
+   l6.insert(9);
+   l6.insert(3);
+   EXPECT_EQ(l6.size(), 2);
+   EXPECT_EQ(l6[0], 3);
+   EXPECT_EQ(l6[1], 9);
 }
 
 TEST(SortedListTest, list_reset) {

@@ -36,7 +36,8 @@ public:
    SortedList<Object> &operator=(const SortedList<Object> &);  // assignment-copy
    SortedList<Object> &operator=(SortedList<Object> &&);       // assignment-move
    Object operator[](const int) const;                         // index access operator
-   ////Object &operator+(const SortedList<Object> &) const;        // append operator
+   SortedList<Object> operator+(const SortedList<Object> &);  // append operator
+   ////Object &operator==(const SortedList<Object> &) const;        // equals operator
    template <typename T>
    friend std::ostream &operator<<(std::ostream &, const SortedList<T> &);  // print stream
 
@@ -49,7 +50,6 @@ private:
    void deleteNode(SListNode<Object> *);
    int elementIndex(Object);
 
-   bool elementMatch(SListNode<Object> *, Object) const;
 };
 
 #include "SortedList.cpp"

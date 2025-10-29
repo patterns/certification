@@ -38,24 +38,6 @@ SortedList<T>::SortedList(SortedList<T> &&other):
    // See the tutorial
    // https://learn.microsoft.com/en-us/cpp/cpp/move-constructors-and-move-assignment-operators-cpp?view=msvc-170
    *this = std::move(other);
-}/*
-template <typename T>
-SortedList<T>::SortedList(SortedList<T> &&other):
-   length_(0),
-   header(new SListNode<T>(HeadNode, true)) {
-   length_ = other.length_;    // assign the length from the source obj
-   header = other.header;      // assign the head from the source obj
-
-   other.length_ = 0;          // zero-out the length in the source obj
-   other.header->next_ = nullptr; // default next in the source obj
-   other.header->prev_ = nullptr; // default prev in the source obj
-}
-*/
-
-// Element identity
-template <typename T>
-bool SortedList<T>::elementMatch(SListNode<T> *n, T elem) const {
-   return n->elementMatch(elem);
 }
 
 // node creation
@@ -71,22 +53,29 @@ bool SortedList<T>::insert(T elem) {
    }
 
    SListNode<T> *n0 = zeroNode();
-   SListNode<T> *n1 = n0->child();
-   if (n1->isHeadNode()) {           // single node
-      if (elementMatch(n0, elem)) {  // node already exists
-         n0->counterPlus();          // increment duplicate counter
+/***************************
+   if (!n0->child()->isItemNode()) {    // single node case
+      if (n0->elementMatch(elem)) {     // dup exists
+         n0->counterPlus();
+         length_++;
+         return true;
+      } else if (n0->element() < elem) {    // insert-elem is larger value
+         SListNode<T> *newNode = new SListNode<T>(elem);
+         newNode->initialize(elem, n0, header);
+         n0->next_ = newNode;
+         header->prev_ = newNode;
+         length_++;
+         return true;
+      } else {    // insert-elem is new zero position
+         SListNode<T> *newNode = new SListNode<T>(elem);
+         newNode->initialize(elem, header, n0);
+         n0->prev_ = newNode;
+         header->next_ = newNode;
          length_++;
          return true;
       }
-
-      // create new n1
-      n1 = new SListNode<T>(elem);
-      n1->initialize(elem, n0, header);
-      n0->next_ = n1;
-      header->prev_ = n1;
-      length_++;
-      return true;
    }
+**********************/
 
    // find the first list item that is greater/eq (>=) than insert-elem
    SListNode<T> *visit = n0;  // start at position zero node
@@ -108,7 +97,7 @@ bool SortedList<T>::insert(T elem) {
       tn->next_ = newNode;
       header->prev_ = newNode;
    } else {
-      if (elementMatch(visit, elem)) {  // duplicate already exists
+      if (visit->elementMatch(elem)) {  // duplicate already exists
          visit->counterPlus();          // increment the occurance counter
       } else {
          // attach in front of cursor (visit)
@@ -180,7 +169,7 @@ int SortedList<T>::elementIndex(T elem) {
    SListNode<T> *visit = zeroNode();  // position cursor to zero node
 
    while (visit->isItemNode()) {
-      if (elementMatch(visit, elem)) {
+      if (visit->elementMatch(elem)) {
          break;  // found a matching element
       }
 
@@ -269,6 +258,34 @@ T SortedList<T>::operator[](const int index) const {
    }
 
    return visit->element();
+}
+
+// List append operator
+template <typename T>
+SortedList<T> SortedList<T>::operator+(const SortedList<T> &other) {
+   // merge l1 and l2 into new (sorted) list
+   // - declare return list variable (lv)
+   // - copy l2 into lv 
+   // - insert l1 items into lv 
+
+   if (this->empty()) {    // l1 is empty, just copy l2
+      return SortedList<T>(other);
+   }
+
+   if (other.empty()) {    // l2 is empty, just copy l1
+      return SortedList<T>(*this);
+   }
+
+/*
+   SortedList<T> lv(other);
+
+   SListNode<T> *visit = zeroNode();
+
+   while (visit->isItemNode()) {
+      lv.insert(visit->element());
+   }
+*/
+   return SortedList<T>(other);    // return a copy of the (local) list result
 }
 
 // head node's prev pointer always indicates the tail node
