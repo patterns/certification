@@ -20,6 +20,7 @@ SortedList<T>::~SortedList() {
    destroying_ = true;    // set flag for destroy stage
    clear();
    delete header;
+   header = nullptr;
 }
 
 // List copy-constructor
@@ -42,7 +43,7 @@ SortedList<T>::SortedList(SortedList<T> &&other):
 
 // node creation
 template <typename T>
-bool SortedList<T>::insert(T elem) {
+bool SortedList<T>::insert(const T &elem) {
    if (empty()) {  // empty list
       SListNode<T> *newNode = new SListNode<T>(elem);
       newNode->initialize(elem, header, header);
@@ -117,7 +118,7 @@ bool SortedList<T>::remove(T elem) {
 // List reset
 template <typename T>
 void SortedList<T>::clear() {
-   if (empty()) {
+   if (empty()) {    // already empty
       return;
    }
 
@@ -127,6 +128,7 @@ void SortedList<T>::clear() {
       tmp = n;          // bookmark the node
       n = n->child();   // advance cursor
       deleteNode(tmp);  // free node
+      tmp = nullptr;
    }
 
    length_ = 0;
@@ -338,28 +340,8 @@ void SortedList<T>::deleteNode(SListNode<T> *node) {
       parent->next_ = child;
    }
 
-   node->next_ = nullptr;
-   node->prev_ = nullptr;
    delete node;
 }
-/*
-// TODO refactor this away? if while loops can always locate head now
-template <typename T>
-int SortedList<T>::indexMax() const {
-   // physical nodes count
-
-   if (empty()) {
-      return 0;
-   }
-
-   int max = 0;
-   SListNode<T> *visit = zeroNode();
-   while (visit->isItemNode()) {
-      visit = visit->child();
-      max++;
-   }
-   return max;
-}*/
 
 ////////////////////////////////////////////////
 // Non-member overloads

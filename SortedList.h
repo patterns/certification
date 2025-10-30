@@ -28,7 +28,7 @@ public:
    ~SortedList();  // the destructor
    int size() const;
    bool empty() const;
-   bool insert(Object);
+   bool insert(const Object &);
    bool remove(Object);
    void clear();
    SortedList<Object> &operator=(const SortedList<Object> &);  // assignment-copy

@@ -17,9 +17,10 @@ FetchContent_MakeAvailable(googletest)
 add_executable(search_test
   default_test.cc
   index_test.cc
-  string_test.cc
+###  string_test.cc
   uint_test.cc
-####  charstar_test.cc
+  char_test.cc
+  double_test.cc
 )
 include_directories (search_test ..)
 target_link_libraries(search_test

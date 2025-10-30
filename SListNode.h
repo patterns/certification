@@ -25,6 +25,7 @@ public:
    SListNode *next_;
 
    void initialize(T elem, SListNode *prev, SListNode *next);
+   void deinit();
    SListNode *clone() const;
    SListNode *child() const;
    SListNode *parent() const;
@@ -65,9 +66,11 @@ SListNode<T>::SListNode(T elem) {
    counter_ = 0;
 }
 
+// MAYBE additiona to dctor, need a clear/reset to call manually before setting pointers to nullptr
 // destructor of node
 template <typename T>
 SListNode<T>::~SListNode() {
+/******************************
    if (ntype_ == FreeNode) {
       return;  // already in destroy stage
    }
@@ -87,6 +90,7 @@ SListNode<T>::~SListNode() {
       is.resize(0);    // shrink capacity
       is.swap(empty);  // trigger destroy of internal buffer
    }
+**********************/
 }
 
 // node initialization (see TICPP, Bruce Eckel)
@@ -96,6 +100,28 @@ void SListNode<T>::initialize(T elem, SListNode<T> *prev, SListNode<T> *next) {
    item_ = elem;
    prev_ = prev;
    next_ = next;
+}
+
+// prepare node members for impending node destruction
+template <typename T>
+void SListNode<T>::deinit() {
+   prev_ = nullptr;
+   next_ = nullptr;
+
+   if (!std::is_fundamental<T>()) {
+      deinitItem<T>(std::move(item_));
+/*****************
+      ////std::string is = static_cast<std::string>(item_);
+      std::string is = resolveString(item_);
+      std::string empty;
+
+      is.clear();      // reset string
+      is.resize(0);    // shrink capacity
+      is.swap(empty);  // trigger destroy of internal buffer
+
+      item_ = 0;
+**************************/
+   }
 }
 
 // copy the nodes meant to be called by the header node

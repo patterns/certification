@@ -21,16 +21,35 @@ T safeNull() {
    }
 }
 
-// compile-time definition to allow destructor to handle the non-fundamental data type (std::string)
-// items
+
+// compile-time definition so item (std::string) can be freed
+template <typename T>
+typename std::enable_if<std::is_same<T, std::string>::value, int>::type deinitItem(
+   T &&value) {
+   std::string empty;
+   value.clear();
+   value.resize(0);
+   value.swap(empty);
+
+   return 0;  // T is std::string
+}
+
+// compile-time definition so item (NOT std::string) can be ignored
+template <typename T>
+typename std::enable_if<!std::is_same<T, std::string>::value, int>::type deinitItem(
+   T &&value) {
+   return 0;  // T is NOT std::string
+}
+
+
+// compile-time definition so destructor handles the non-fundamental data type
 template <typename T>
 typename std::enable_if<std::is_same<T, std::string>::value, std::string>::type resolveString(
    const T &value) {
    return value;  // T is std:string, raw value is desired
 }
 
-// compile-time definition to allow destructor to handle the non-fundamental data type (std::string)
-// items
+// compile-time definition so destructor handles the fundamental data types
 template <typename T>
 typename std::enable_if<!std::is_same<T, std::string>::value, std::string>::type resolveString(
    const T &value) {
